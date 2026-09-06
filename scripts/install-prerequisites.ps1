@@ -3,8 +3,9 @@
 Checks or installs the local prerequisites used by the scheduler.
 
 .DESCRIPTION
-The default action is read-only.  Use -InstallPythonPackages to install the
-editable project with every supported optional extra.  Use
+The default action is read-only.  Use -InstallPythonPackages to run
+`uv sync --all-extras`.  Use -UsePipFallback only for a legacy machine that
+cannot install uv.  Use
 -InstallWindowsTools only when Windows Package Manager/winget is available and
 you have reviewed the package installation prompts.  Azure resources are never
 created by this script.
@@ -13,7 +14,8 @@ created by this script.
 param(
     [switch]$InstallPythonPackages,
     [switch]$InstallWindowsTools,
-    [switch]$SkipPipUpgrade
+    [switch]$SkipPipUpgrade,
+    [switch]$UsePipFallback
 )
 
 Set-StrictMode -Version Latest
@@ -84,12 +86,22 @@ if (-not (Test-Tool 'python')) {
 if ($InstallPythonPackages) {
     Push-Location $repoRoot
     try {
-        if (-not $SkipPipUpgrade) {
-            & python -m pip install --upgrade pip
-            if ($LASTEXITCODE -ne 0) { throw 'pip upgrade failed.' }
+        if (Test-Tool 'uv') {
+            & uv sync --all-extras
+            if ($LASTEXITCODE -ne 0) { throw 'uv dependency synchronization failed.' }
         }
-        & python -m pip install -e '.[kubernetes,storage,agent,observability,analysis,dev]'
-        if ($LASTEXITCODE -ne 0) { throw 'project dependency installation failed.' }
+        elseif ($UsePipFallback) {
+            Write-Warning 'uv is not installed; using the explicitly requested pip fallback.'
+            if (-not $SkipPipUpgrade) {
+                & python -m pip install --upgrade pip
+                if ($LASTEXITCODE -ne 0) { throw 'pip upgrade failed.' }
+            }
+            & python -m pip install -e '.[kubernetes,storage,agent,observability,analysis,dev]'
+            if ($LASTEXITCODE -ne 0) { throw 'project dependency installation failed.' }
+        }
+        else {
+            throw 'uv is required for dependency installation. Install uv and rerun, or explicitly pass -UsePipFallback.'
+        }
     }
     finally {
         Pop-Location
@@ -98,6 +110,7 @@ if ($InstallPythonPackages) {
 
 $checks = @(
     @{ Name = 'python'; Required = $true },
+    @{ Name = 'uv'; Required = $true },
     @{ Name = 'git'; Required = $true },
     @{ Name = 'az'; Required = $false },
     @{ Name = 'kubectl'; Required = $false },

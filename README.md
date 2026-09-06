@@ -39,9 +39,14 @@ thresholds.
 - `scripts/` — preflight, carbon capture, experiment, collection, and Azure
   lifecycle commands.
 - `tests/` — focused trust-gate and MILP tests.
+- `PLUG_AND_PLAY_SETUP.md` — operator inputs and the complete setup/run
+  checklist.
 
 ## Prerequisites
 
+- Arch Linux is the supported development environment. Python dependencies are
+  resolved by `uv.lock`; use `uv run` rather than a system Python or a manually
+  maintained virtualenv.
 - Python 3.11–3.13.
 - Azure CLI, `kubectl`, and Helm when deploying to Azure.
 - An Azure subscription with quota for two small AKS clusters.
@@ -50,48 +55,51 @@ thresholds.
 - A local Ollama service running the selected model. For Azure execution, make
   it reachable only through the configured secure tunnel.
 
-The core package has a small local dependency set. Kubernetes, observability,
-and agent integrations are opt-in extras so local validation does not require
-Azure, Ollama, RAGAS, or NeMo Guardrails.
+Install the common Arch packages and the locked Python environment:
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-python -m pip install -e ".[kubernetes,storage,agent,observability]"
+```bash
+bash scripts/install-prerequisites-arch.sh --install-arch-tools --install-uv
+uv sync --all-extras
 ```
 
-Install the second command only on the machine that will run the full
-controller. Do not put API tokens, kubeconfigs, tunnel keys, or completed
-experiment configurations in version control.
+The helper is read-only unless an install flag is supplied. Azure CLI, Ollama,
+and Tailscale are deliberately left to their official Linux installation
+instructions because their package source differs across Arch setups. Do not
+put API tokens, kubeconfigs, tunnel keys, or completed experiment
+configurations in version control.
+
+For a Windows workstation, `scripts/install-prerequisites.ps1` remains
+available, but install `uv` first and use `uv sync --all-extras` there too.
 
 ## Configure before running
 
-Copy the intentionally incomplete template:
+Copy the intentionally incomplete template and protect it:
 
-```powershell
-Copy-Item config\experiment.draft.yaml config\experiment.yaml
+```bash
+cp .env.example .env
+chmod 600 .env
+$EDITOR .env
 ```
 
-After installing the two regional releases and completing the pilot, copy the
-target template and fill its per-region cluster credentials and benchmark
-template values:
+Render private configuration only after the required `.env` values are real:
 
-```powershell
-Copy-Item config\targets.draft.yaml config\targets.yaml
+```bash
+uv run python scripts/bootstrap.py --phase infra
+uv run python scripts/bootstrap.py --phase experiment
 ```
 
-The latency catalog is also pilot output, not a guessed default:
+The bootstrapper creates ignored files from `.env`:
 
-```powershell
-Copy-Item config\latency_catalog.draft.yaml config\latency_catalog.yaml
-```
+- `infra/bicep/main.bicepparam` and `infra/bicep/budget.bicepparam`;
+- `config/experiment.yaml`;
+- `config/targets.yaml`; and
+- `config/latency_catalog.yaml`.
 
-Fill `config/experiment.yaml` only after the pilot establishes a real workload
-profile, SLO, latency catalog, permitted regions, and scheduling window. The
-main experiment command rejects missing values, placeholder values, invalid
-trust weights, and regions not listed by the configuration.
+These generated files are ignored and must not be committed. Fill the
+experiment values only after the pilot establishes a real workload profile,
+SLO, latency catalog, permitted regions, and scheduling window. The main
+experiment command rejects missing values, placeholder values, invalid trust
+weights, and regions not listed by the configuration.
 
 Store secrets outside the YAML file:
 
@@ -107,14 +115,14 @@ Store secrets outside the YAML file:
    config shape, Azure access where available, Electricity Maps provider-region
    queries, and Ollama reachability.
 
-   ```powershell
-   python scripts/preflight.py --config config/experiment.yaml
+    ```bash
+    uv run python scripts/preflight.py --config config/experiment.yaml
    ```
 
 2. Provision Azure only after preflight passes. Create budget alerts first.
 
-   ```powershell
-   .\scripts\start-azure.ps1 -ResourceGroup <resource-group> -PrimaryCluster <primary-cluster> -SecondaryCluster <secondary-cluster>
+    ```bash
+    pwsh -File scripts/start-azure.ps1 -ResourceGroup <resource-group> -PrimaryCluster <primary-cluster> -SecondaryCluster <secondary-cluster>
    ```
 
 3. Deploy the matching regional DeathStarBench stamps, seed each regional
@@ -128,30 +136,30 @@ Store secrets outside the YAML file:
    snapshot trace; retain both locations for audit. The frozen trace is the
    only allowed input source for a replay comparison.
 
-   ```powershell
-   python scripts/capture_carbon.py --config config/experiment.yaml
+    ```bash
+    uv run python scripts/capture_carbon.py --config config/experiment.yaml
    ```
 
 6. Run each mode against the same frozen replay trace. The static default-region
    policy is a reference denominator, not a fourth scheduling algorithm.
 
-   ```powershell
-   python scripts/run_experiment.py --config config/experiment.yaml --mode llm_only
-   python scripts/run_experiment.py --config config/experiment.yaml --mode milp_only
-   python scripts/run_experiment.py --config config/experiment.yaml --mode hybrid
-   python scripts/run_experiment.py --config config/experiment.yaml --mode static_reference
+    ```bash
+    uv run python scripts/run_experiment.py --config config/experiment.yaml --mode llm_only
+    uv run python scripts/run_experiment.py --config config/experiment.yaml --mode milp_only
+    uv run python scripts/run_experiment.py --config config/experiment.yaml --mode hybrid
+    uv run python scripts/run_experiment.py --config config/experiment.yaml --mode static_reference
    ```
 
 7. Collect raw output and generate descriptive tables/plots from artifact files.
 
-   ```powershell
-   python scripts/collect_results.py --run-dir artifacts/runs/<run-id>
-   python scripts/summarize_results.py --runs-dir artifacts/runs
-   python scripts/plot_results.py --runs-dir artifacts/runs --output-dir artifacts/plots
+    ```bash
+    uv run python scripts/collect_results.py --run-dir artifacts/runs/<run-id>
+    uv run python scripts/summarize_results.py --runs-dir artifacts/runs
+    uv run python scripts/plot_results.py --runs-dir artifacts/runs --output-dir artifacts/plots
    ```
 
    Plotting uses only observed values and requires the optional
-   `analysis` extra (`python -m pip install -e ".[analysis]"`). Missing
+    `analysis` extra (`uv sync --extra analysis`). Missing
    measurements produce no point/bar; the helper does not impute values or
    perform formal statistical tests.
 
@@ -162,8 +170,8 @@ Store secrets outside the YAML file:
 
 8. Stop AKS after copying durable artifacts.
 
-   ```powershell
-   .\scripts\stop-azure.ps1 -ResourceGroup <resource-group> -PrimaryCluster <primary-cluster> -SecondaryCluster <secondary-cluster> -RunId <run-id> -ArtifactDirectory <durable-output>
+    ```bash
+    pwsh -File scripts/stop-azure.ps1 -ResourceGroup <resource-group> -PrimaryCluster <primary-cluster> -SecondaryCluster <secondary-cluster> -RunId <run-id> -ArtifactDirectory <durable-output>
    ```
 
 ## Decision behavior
@@ -200,14 +208,14 @@ Pydantic contracts and fail-closed behavior as the direct path.
 The automated test scope deliberately covers the novel contribution only:
 trust-gating and MILP behavior.
 
-```powershell
-python -m pytest
+```bash
+uv run pytest
 ```
 
 If `pytest` is unavailable, use the standard-library fallback where provided:
 
-```powershell
-python -m unittest discover -s tests
+```bash
+uv run python -m unittest discover -s tests
 ```
 
 ## Data integrity and limitations

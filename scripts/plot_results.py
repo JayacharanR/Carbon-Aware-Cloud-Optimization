@@ -116,7 +116,7 @@ def plot_runs(*, runs_dir: str | Path, output_dir: str | Path, include_demo: boo
 
         matplotlib.use("Agg")
     except ImportError as error:
-        raise RuntimeError("plotting requires the optional analysis extra: pip install -e '.[analysis]'") from error
+        raise RuntimeError("plotting requires the optional analysis extra: uv sync --extra analysis") from error
     rows = _load_rows(Path(runs_dir), include_demo)
     if not rows:
         raise ArtifactError("no run manifests found for plotting")

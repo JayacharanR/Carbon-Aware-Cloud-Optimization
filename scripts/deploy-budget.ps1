@@ -21,7 +21,7 @@ if (Test-Path -LiteralPath $envLoader -PathType Leaf) {
 }
 $ParameterFile = if ($ParameterFile) { $ParameterFile } else { Join-Path $repoRoot 'infra/bicep/budget.bicepparam' }
 if (-not (Test-Path -LiteralPath $ParameterFile -PathType Leaf)) {
-    throw "Budget parameter file was not found: $ParameterFile. Run python scripts/bootstrap.py --phase infra first."
+    throw "Budget parameter file was not found: $ParameterFile. Run uv run python scripts/bootstrap.py --phase infra first."
 }
 $SubscriptionId = if ($SubscriptionId) { $SubscriptionId } else { $env:AZURE_SUBSCRIPTION_ID }
 $template = Join-Path $repoRoot 'infra/bicep/budget.bicep'

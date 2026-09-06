@@ -3,12 +3,12 @@
 Build the controller image from the repository root and push it to a registry
 reachable by the primary AKS cluster:
 
-```powershell
+```bash
 docker build -f deploy/controller/Dockerfile -t <registry>/<image>:<tag> .
 docker push <registry>/<image>:<tag>
 ```
 
-Use `scripts/deploy-platform.ps1 -ControllerImage <registry>/<image>:<tag>` to
+Use `pwsh -File scripts/deploy-platform.ps1 -ControllerImage <registry>/<image>:<tag>` to
 apply the deployment and its non-versioned ConfigMaps/Secrets. If applying the
 base Kustomization manually, replace `image: carbon-scheduler-controller` in
 the rendered Deployment first; the placeholder image is not intended to be
@@ -28,8 +28,8 @@ is reviewed. To configure one replay run, supply all five input paths to the pla
 it stores them in the `scheduler-run-inputs` ConfigMap and patches the runtime
 paths to `/etc/carbon-scheduler/inputs/...`:
 
-```powershell
-.\scripts\deploy-platform.ps1 `
+```bash
+pwsh -File scripts/deploy-platform.ps1 `
   -PrimaryContext <primary-context> -SecondaryContext <secondary-context> `
   -ExperimentConfigPath config\experiment.yaml `
   -ControllerImage <registry>/<image>:<tag> -OllamaBaseUrl <tunnel-url> `

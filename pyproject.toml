@@ -44,6 +44,13 @@ carbon-scheduler = "carbon_scheduler.workflow:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/carbon_scheduler", "scripts"]
 
+# uv is the supported local and image build workflow.  The lockfile is
+# committed so an implementation agent or operator gets the same resolved
+# dependency set across machines.  Optional extras remain explicit because a
+# local MILP-only run does not need the cloud/agent integrations.
+[tool.uv]
+package = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

@@ -3,7 +3,8 @@
 > Agent handoff and plug-and-play completion status: see
 > [AGENT_IMPLEMENTATION_PLAN.md](AGENT_IMPLEMENTATION_PLAN.md). The companion
 > `.env.example`, `scripts/bootstrap.py`, and
-> `scripts/install-prerequisites.ps1` now provide the operator-to-runtime
+> `scripts/install-prerequisites.ps1` and
+> `scripts/install-prerequisites-arch.sh` now provide the operator-to-runtime
 > configuration path. See [PLUG_AND_PLAY_SETUP.md](PLUG_AND_PLAY_SETUP.md) for
 > where each external value comes from; real Azure/API/DeathStarBench values remain external
 > inputs and are never invented.
@@ -56,6 +57,7 @@ Create a Python-based repository with infrastructure and deployment definitions 
 .
 ├── README.md
 ├── pyproject.toml
+├── uv.lock
 ├── config/
 │   ├── experiment.draft.yaml
 │   ├── experiment.yaml
@@ -99,11 +101,13 @@ Create a Python-based repository with infrastructure and deployment definitions 
     └── runs/
 ```
 
-Use Python 3.11--3.13. The checked-in `pyproject.toml` bounds the core and
-optional dependency versions, but this repository does not claim a universal
-lockfile: optional cloud/agent packages are resolved in the operator's
-environment. Record the installed package set (`pip freeze`) with any real
-run if exact environment reproduction is needed.
+Use Python 3.11--3.13. The checked-in `pyproject.toml` declares the core and
+optional extras, and the committed `uv.lock` records the resolved package set
+for reproducible local and image builds. Run `uv sync --all-extras` and use
+`uv run ...` for Python commands. Do not install the project into the system
+Python with pip. The lockfile still has to be refreshed deliberately when a
+dependency changes; it does not remove the need to record the image digest and
+experiment configuration hashes for a real run.
 
 Do not add a database solely for experiment metadata. Persist run logs as JSONL, raw load-test output, YAML manifests, and generated CSV files under `artifacts/runs/<run-id>/`.
 

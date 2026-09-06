@@ -44,6 +44,19 @@ Already implemented and tested:
 - Focused trust, MILP, and workflow tests.
 - Controller and regional deployment manifests.
 
+Dependency/reproducibility contract:
+
+- `pyproject.toml` is the package/dependency declaration.
+- `uv.lock` is committed and is the authoritative resolved dependency set.
+- The supported setup is `uv sync --all-extras`; Python commands are run as
+  `uv run ...` so they use the project environment rather than system Python.
+- Optional extras remain explicit in the metadata. A minimal local check can
+  use `uv sync --extra dev`; the full controller setup uses
+  `uv sync --all-extras`.
+- The controller image copies `uv.lock` and installs its runtime extras with
+  `uv sync --frozen`; it does not resolve a different dependency set at image
+  build time.
+
 The repository has intentionally incomplete drafts in `config/`. No real Azure
 resources, API trace, workload metrics, or DeathStarBench fixture are stored in
 the repository.
@@ -65,10 +78,10 @@ the repository.
 `scripts/bootstrap.py` is the single renderer from operator inputs to runtime
 files:
 
-```powershell
-Copy-Item .env.example .env
-python scripts/bootstrap.py --phase infra
-python scripts/bootstrap.py --phase experiment
+```bash
+cp .env.example .env
+uv run python scripts/bootstrap.py --phase infra
+uv run python scripts/bootstrap.py --phase experiment
 ```
 
 It validates missing/placeholder values, numeric types, trust weights, regions,
@@ -85,10 +98,15 @@ overwrite an existing generated file.
 
 ### 3.3 Prerequisite installer/checker
 
-`scripts/install-prerequisites.ps1` performs a read-only tool check by default.
-`-InstallPythonPackages` installs all project extras. The explicit
+`scripts/install-prerequisites.ps1` performs a read-only tool check by default
+and requires `uv` for a complete local setup. `-InstallPythonPackages` runs
+`uv sync --all-extras`; the explicit
 `-InstallWindowsTools` switch may use winget for Azure CLI, kubectl, Helm,
-Docker Desktop, Ollama, and Tailscale. It never provisions Azure resources.
+Docker Desktop, Ollama, and Tailscale. A legacy `-UsePipFallback` is available
+only when uv cannot be installed. On Arch Linux, use
+`scripts/install-prerequisites-arch.sh`; it is read-only by default and has
+separate flags for pacman, uv installation, and dependency synchronization.
+Neither helper provisions Azure resources.
 
 ### 3.4 Dependency compatibility and focused bootstrap tests
 
@@ -212,28 +230,28 @@ obtain those values.
 
 Before infrastructure mutation:
 
-```powershell
-.\scripts\install-prerequisites.ps1
-python scripts/bootstrap.py --phase infra --check-only
+```bash
+bash scripts/install-prerequisites-arch.sh
+uv run python scripts/bootstrap.py --phase infra --check-only
 ```
 
 After the pilot:
 
-```powershell
-python scripts/bootstrap.py --phase experiment --check-only
-python scripts/preflight.py --config config/experiment.yaml
-python -m pytest -q
+```bash
+uv run python scripts/bootstrap.py --phase experiment --check-only
+uv run python scripts/preflight.py --config config/experiment.yaml
+uv run pytest -q
 ```
 
 For a real replay run:
 
-```powershell
-python scripts/run_experiment.py --config config/experiment.yaml --mode llm_only --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
-python scripts/run_experiment.py --config config/experiment.yaml --mode milp_only --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
-python scripts/run_experiment.py --config config/experiment.yaml --mode hybrid --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
-python scripts/run_experiment.py --config config/experiment.yaml --mode static_reference --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
-python scripts/summarize_results.py --runs-dir artifacts/runs
-python scripts/plot_results.py --runs-dir artifacts/runs --output-dir artifacts/plots
+```bash
+uv run python scripts/run_experiment.py --config config/experiment.yaml --mode llm_only --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
+uv run python scripts/run_experiment.py --config config/experiment.yaml --mode milp_only --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
+uv run python scripts/run_experiment.py --config config/experiment.yaml --mode hybrid --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
+uv run python scripts/run_experiment.py --config config/experiment.yaml --mode static_reference --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml --latency-catalog config/latency_catalog.yaml
+uv run python scripts/summarize_results.py --runs-dir artifacts/runs
+uv run python scripts/plot_results.py --runs-dir artifacts/runs --output-dir artifacts/plots
 ```
 
 ## 7. Definition of plug-and-play

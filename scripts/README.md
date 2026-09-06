@@ -1,11 +1,22 @@
 # Operational scripts
 
+On Arch Linux, install and run the project through `uv`:
+
+```bash
+bash scripts/install-prerequisites-arch.sh --install-uv
+uv sync --all-extras
+uv run pytest -q
+```
+
+`uv.lock` is committed. Do not install project dependencies into the system
+Python with `pip`; use `uv sync` and `uv run` instead.
+
 All cloud-mutating scripts require an explicit `-Apply` switch or operate only on the two clusters named in their arguments. They never create a cluster from incomplete configuration or delete Azure resources.
 
 Suggested order:
 
 1. Copy `.env.example` to `.env` and fill it locally. Python scripts and the PowerShell scripts load this file automatically. Do not put secrets in a committed file.
-2. Run `python scripts/bootstrap.py --phase infra` to render private Bicep parameter files. Create the subscription budget with `deploy-budget.ps1 -Apply`, then run `azure-preflight.ps1`.
+2. Run `uv run python scripts/bootstrap.py --phase infra` to render private Bicep parameter files. Create the subscription budget with `pwsh -File scripts/deploy-budget.ps1 -Apply`, then run `pwsh -File scripts/azure-preflight.ps1`.
 3. Review `deploy-aks.ps1` without `-Apply`; after the what-if and budget pass, re-run with `-Apply`.
 4. Start both clusters with `start-azure.ps1`, build/push the controller and `dsb-tools` images, then apply the controller-side platform with `deploy-platform.ps1 -Apply`.
 5. Check out DeathStarBench at an immutable SHA with its submodules initialized. Run `install-deathstarbench.ps1 -Apply` once per regional context, using separate rendered-manifest artifact paths.
@@ -15,7 +26,7 @@ Suggested order:
 `azure-preflight.ps1` verifies local tooling, the active Azure subscription, presence of a subscription budget, region/SKU signals, a local Ollama endpoint, and static manifest rendering. It cannot prove live Azure capacity, quota, the future availability of a spot VM, or Electricity Maps provider-region coverage. The Python configuration/carbon preflight must make those authenticated, experiment-specific checks before provisioning or running the main study.
 
 After the pilot has produced measured p95/error values, run
-`python scripts/bootstrap.py --phase experiment` to render the completed
+`uv run python scripts/bootstrap.py --phase experiment` to render the completed
 experiment, target, and latency files. The bootstrapper is deliberately strict:
 it does not invent endpoints, workload rates, SLOs, trust weights, or latency
 measurements.
@@ -26,15 +37,15 @@ All Python commands are safe to run locally after installing the editable
 package. They accept repository-relative paths and refuse incomplete
 configuration.
 
-```powershell
-python scripts/preflight.py --config config/experiment.yaml --skip-azure --skip-live --skip-ollama
-python scripts/ingest_graph.py --manifests <pinned-deathstarbench-manifests> --output artifacts/graph.json
+```bash
+uv run python scripts/preflight.py --config config/experiment.yaml --skip-azure --skip-live --skip-ollama
+uv run python scripts/ingest_graph.py --manifests <pinned-deathstarbench-manifests> --output artifacts/graph.json
 # Optional in-cluster write; credentials stay in the environment.
-python scripts/ingest_graph.py --manifests <pinned-deathstarbench-manifests> --output artifacts/graph.json --neo4j-uri bolt://<neo4j-host>:7687
-python scripts/capture_carbon.py --config config/experiment.yaml --output artifacts/carbon-trace.json
-python scripts/run_experiment.py --config config/experiment.yaml --mode hybrid --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml
-python scripts/summarize_results.py --runs-dir artifacts/runs
-python scripts/plot_results.py --runs-dir artifacts/runs --output-dir artifacts/plots
+uv run python scripts/ingest_graph.py --manifests <pinned-deathstarbench-manifests> --output artifacts/graph.json --neo4j-uri bolt://<neo4j-host>:7687
+uv run python scripts/capture_carbon.py --config config/experiment.yaml --output artifacts/carbon-trace.json
+uv run python scripts/run_experiment.py --config config/experiment.yaml --mode hybrid --replay-trace artifacts/carbon-trace.json --graph artifacts/graph.json --target-config config/targets.yaml
+uv run python scripts/summarize_results.py --runs-dir artifacts/runs
+uv run python scripts/plot_results.py --runs-dir artifacts/runs --output-dir artifacts/plots
 ```
 
 `--dry-run --demo-agent` is available for controller plumbing only. Its
