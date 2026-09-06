@@ -1,0 +1,17 @@
+// Copy to a non-tracked .bicepparam file and replace every REPLACE_ME value.
+// Do not deploy this example as-is.
+using './main.bicep'
+
+param resourceGroupName = 'REPLACE_ME_RESOURCE_GROUP'
+param primaryLocation = 'REPLACE_ME_PRIMARY_AZURE_REGION'
+param secondaryLocation = 'REPLACE_ME_SECONDARY_AZURE_REGION'
+param primaryClusterName = 'REPLACE_ME_PRIMARY_CLUSTER'
+param secondaryClusterName = 'REPLACE_ME_SECONDARY_CLUSTER'
+param primaryDnsPrefix = 'REPLACE_ME_UNIQUE_PRIMARY_DNS_PREFIX'
+param secondaryDnsPrefix = 'REPLACE_ME_UNIQUE_SECONDARY_DNS_PREFIX'
+param kubernetesVersion = 'REPLACE_ME_SUPPORTED_NON_PREVIEW_VERSION'
+param sshPublicKey = 'REPLACE_ME_SSH_PUBLIC_KEY'
+param adminUsername = 'azureuser'
+param nodeVmSize = 'Standard_B2s'
+param nodeCount = 2
+param maxPods = 30

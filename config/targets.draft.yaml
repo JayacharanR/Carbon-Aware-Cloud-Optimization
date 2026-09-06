@@ -1,0 +1,52 @@
+# Copy to config/targets.yaml and fill after both regional DeathStarBench
+# releases have been installed.  Empty values are intentional: the executor
+# refuses to create a Job until every required value is supplied.
+#
+# For the controller running inside the primary cluster, set kube_context to
+# "in-cluster".  For the other cluster, use a separately mounted,
+# least-privilege kubeconfig and set kubeconfig_path to its in-container path
+# (the base deployment mounts the optional Secret at
+# /var/run/scheduler/kubeconfigs).
+regions:
+  primary-region:
+    cluster_name: ""
+    kube_context: ""
+    kubeconfig_path: ""
+    namespace: "benchmark"
+    frontend_service: ""
+    reset_job_template: "deploy/deathstarbench/reset-job.yaml"
+    benchmark_job_template: "deploy/deathstarbench/benchmark-job.yaml"
+    template_values:
+      DSB_TOOLS_IMAGE: ""
+      GRAPH_DATASET: ""
+      FRONTEND_HOST: ""
+      FRONTEND_PORT: ""
+      ACTIVE_DEADLINE_SECONDS: ""
+      TARGET_URL: ""
+      WRK_THREADS: ""
+      WRK_CONNECTIONS: ""
+      WRK_DURATION: ""
+      REQUESTS_PER_SECOND: ""
+      LOADGEN_CPU_REQUEST: ""
+      LOADGEN_MEMORY_REQUEST: ""
+  secondary-region:
+    cluster_name: ""
+    kube_context: ""
+    kubeconfig_path: ""
+    namespace: "benchmark"
+    frontend_service: ""
+    reset_job_template: "deploy/deathstarbench/reset-job.yaml"
+    benchmark_job_template: "deploy/deathstarbench/benchmark-job.yaml"
+    template_values:
+      DSB_TOOLS_IMAGE: ""
+      GRAPH_DATASET: ""
+      FRONTEND_HOST: ""
+      FRONTEND_PORT: ""
+      ACTIVE_DEADLINE_SECONDS: ""
+      TARGET_URL: ""
+      WRK_THREADS: ""
+      WRK_CONNECTIONS: ""
+      WRK_DURATION: ""
+      REQUESTS_PER_SECOND: ""
+      LOADGEN_CPU_REQUEST: ""
+      LOADGEN_MEMORY_REQUEST: ""

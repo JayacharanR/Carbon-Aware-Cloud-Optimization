@@ -1,0 +1,13 @@
+// Copy to a non-tracked .bicepparam file and replace every REPLACE_ME value.
+// Do not place an actual notification address in a committed file.
+using './budget.bicep'
+
+param budgetName = 'REPLACE_ME_BUDGET_NAME'
+// Zero is intentionally invalid for the Bicep template. Replace it with the
+// real monthly budget before deployment.
+param monthlyAmount = 0
+param contactEmails = [
+  'REPLACE_ME_MONITORED_EMAIL'
+]
+param startDate = 'REPLACE_ME_UTC_START_DATE'
+param endDate = 'REPLACE_ME_UTC_END_DATE'

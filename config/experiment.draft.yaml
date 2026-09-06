@@ -1,0 +1,61 @@
+# Copy this file to config/experiment.yaml after the pilot. Empty values are
+# intentional: main experiment commands refuse incomplete configuration.
+azure:
+  resource_group: null
+  primary_region: null
+  secondary_region: null
+  primary_cluster: null
+  secondary_cluster: null
+
+carbon:
+  api_base_url: "https://api.electricitymaps.com/v4"
+  provider: "azure"
+  primary_provider_region: null
+  secondary_provider_region: null
+  forecast_horizon_hours: null
+  cache_directory: "data/carbon_cache"
+  # Maximum allowed age of a same-region saved response before the decision
+  # must fail rather than use stale carbon data.
+  cache_max_age_seconds: null
+  replay_trace_path: null
+
+workload:
+  namespace: "benchmark"
+  frontend_service: null
+  benchmark_script: null
+  profile_id: null
+  earliest_start: null
+  deadline: null
+  reset_before_session: true
+
+slo:
+  profile_p95_limit_ms: null
+  profile_error_rate_limit: null
+
+trust:
+  threshold: null
+  weights:
+    ragas_faithfulness: null
+    ragas_context_precision: null
+    nemo_rails: null
+    data_freshness: null
+    execution_feasibility: null
+
+milp:
+  slot_minutes: null
+  allowed_regions: []
+  latency_catalog_path: null
+
+ollama:
+  base_url: null
+  model: null
+  request_timeout_seconds: null
+  retry_count: null
+
+experiments:
+  modes:
+    - llm_only
+    - milp_only
+    - hybrid
+  static_reference_region: null
+  random_seed: null

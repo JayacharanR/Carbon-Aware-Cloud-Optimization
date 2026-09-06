@@ -1,0 +1,4 @@
+# Copy to a private latency catalog after the pilot.  Do not fill this file
+# with guessed values.  The runner expects {workload_profile: {region: p95_ms}}
+# and rejects an empty catalog for a real run.
+{}

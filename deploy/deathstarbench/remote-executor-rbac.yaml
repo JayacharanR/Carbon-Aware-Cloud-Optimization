@@ -1,0 +1,44 @@
+# Apply this to a regional cluster only if issuing a distinct least-privilege
+# credential for remote benchmark dispatch. The manifest creates no token and
+# no RoleBinding to a guessed external identity.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scheduler-executor
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/part-of: trust-gated-carbon-scheduler
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: scheduler-executor
+  namespace: benchmark
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: scheduler-executor
+  namespace: benchmark
+subjects:
+  - kind: ServiceAccount
+    name: scheduler-executor
+    namespace: benchmark
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: scheduler-executor

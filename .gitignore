@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.venv/
+venv/
+
+# Local configuration and secrets
+config/experiment.yaml
+config/targets.yaml
+config/*.local.yaml
+.env
+.env.*
+!.env.example
+
+# Captured data and run outputs. Keep directory placeholders only.
+data/carbon_cache/*.json
+data/carbon_cache/**/*.json
+data/carbon_cache/**/*.tmp
+artifacts/runs/*
+!artifacts/runs/.gitkeep
+artifacts/plots/*
+!artifacts/plots/.gitkeep
+
+# Local infrastructure state
+infra/**/*.parameters.json
+infra/**/*.bicepparam
+*.tfstate

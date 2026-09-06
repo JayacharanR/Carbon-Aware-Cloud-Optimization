@@ -1,0 +1,13 @@
+# The platform script may replace this empty ConfigMap with the immutable
+# replay trace, graph JSON, latency catalog, and target YAML for one concrete run.  Keeping the
+# object in the base kustomization gives the controller a stable mount point;
+# an absent or incomplete input is still rejected by the controller.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scheduler-run-inputs
+  namespace: scheduler-system
+  labels:
+    app.kubernetes.io/name: scheduler-controller
+    app.kubernetes.io/part-of: trust-gated-carbon-scheduler
+data: {}

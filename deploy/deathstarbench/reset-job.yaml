@@ -1,0 +1,29 @@
+# This is a renderer input used by the executor, not a directly-applicable Kubernetes manifest.
+# It reseeds using DeathStarBench's upstream init_social_graph.py with an
+# operator-chosen graph dataset. The source revision is the one baked into
+# DSB_TOOLS_IMAGE. It does not itself delete existing database state.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reset-${CYCLE_ID}
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/name: social-network-reset
+    app.kubernetes.io/part-of: trust-gated-carbon-scheduler
+    scheduler.carbonscheduler.io/cycle-id: "${CYCLE_ID}"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: ${ACTIVE_DEADLINE_SECONDS}
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: reset
+          image: "${DSB_TOOLS_IMAGE}"
+          imagePullPolicy: IfNotPresent
+          command: ["/usr/bin/python3", "/opt/deathstarbench/socialNetwork/scripts/init_social_graph.py"]
+          args:
+            - "--graph=${GRAPH_DATASET}"
+            - "--ip=${FRONTEND_HOST}"
+            - "--port=${FRONTEND_PORT}"

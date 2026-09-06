@@ -1,0 +1,66 @@
+# This is a renderer input used by the executor, not a directly-applicable Kubernetes manifest.
+# Replace every ${...} token from one frozen DecisionInput/ExecutionReceipt.
+# The executor must use the cycle ID as an idempotency key before creating it.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: benchmark-${CYCLE_ID}
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/name: social-network-benchmark
+    app.kubernetes.io/part-of: trust-gated-carbon-scheduler
+    scheduler.carbonscheduler.io/run-id: "${RUN_ID}"
+    scheduler.carbonscheduler.io/cycle-id: "${CYCLE_ID}"
+    scheduler.carbonscheduler.io/mode: "${ALGORITHM_MODE}"
+    scheduler.carbonscheduler.io/region: "${TARGET_REGION}"
+    scheduler.carbonscheduler.io/carbon-snapshot-id: "${CARBON_SNAPSHOT_ID}"
+    scheduler.carbonscheduler.io/config-hash: "${CONFIG_HASH}"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: ${ACTIVE_DEADLINE_SECONDS}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: social-network-benchmark
+        scheduler.carbonscheduler.io/cycle-id: "${CYCLE_ID}"
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: wrk2
+          image: "${DSB_TOOLS_IMAGE}"
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-ec"]
+          args:
+            - >-
+              test -n "${TARGET_URL}";
+              exec /opt/deathstarbench/wrk2/wrk
+              -D exp
+              -t "${WRK_THREADS}"
+              -c "${WRK_CONNECTIONS}"
+              -d "${WRK_DURATION}"
+              -L
+              -s /workload/traffic.lua
+              "${TARGET_URL}"
+              -R "${REQUESTS_PER_SECOND}"
+          env:
+            - name: TARGET_URL
+              value: "${TARGET_URL}"
+          volumeMounts:
+            - name: workload
+              mountPath: /workload
+              readOnly: true
+          resources:
+            requests:
+              cpu: "${LOADGEN_CPU_REQUEST}"
+              memory: "${LOADGEN_MEMORY_REQUEST}"
+      volumes:
+        - name: workload
+          configMap:
+            name: benchmark-workload
+            items:
+              - key: traffic.lua
+                path: traffic.lua

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scheduler-artifacts
+  namespace: scheduler-system
+  labels:
+    app.kubernetes.io/name: scheduler-controller
+    app.kubernetes.io/part-of: trust-gated-carbon-scheduler
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Leave storageClassName unset so the selected AKS cluster uses its default
+  # provisioner. The operator may set a supported class after preflight.

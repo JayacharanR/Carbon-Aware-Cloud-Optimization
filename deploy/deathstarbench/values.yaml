@@ -1,0 +1,6 @@
+# Values overlaid on the upstream DeathStarBench Social Network Helm chart.
+# This uses a single replica per chart service to stay within the course-scale
+# scope. It does not add cross-region replication or persistence semantics.
+global:
+  replicas: 1
+  imagePullPolicy: IfNotPresent

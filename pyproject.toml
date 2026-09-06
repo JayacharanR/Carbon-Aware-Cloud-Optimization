@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "carbon-scheduler"
+version = "0.1.0"
+description = "Trust-gated, carbon-intensity-aware benchmark-session scheduler"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "Project contributors" }]
+dependencies = [
+  "pydantic>=2.7,<3",
+  "PyYAML>=6,<7",
+  "requests>=2.31,<3",
+  "PuLP>=2.8,<4",
+]
+
+[project.optional-dependencies]
+kubernetes = ["kubernetes>=29,<35"]
+storage = [
+  "neo4j>=5,<7",
+  "qdrant-client>=1.9,<2",
+]
+agent = [
+  "langgraph>=0.2,<2",
+  "ragas>=0.2,<1",
+  "nemoguardrails>=0.10,<1",
+  "openai>=1.0,<3",
+]
+observability = [
+  "opentelemetry-api>=1.25,<2",
+  "opentelemetry-sdk>=1.25,<2",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.25,<2",
+]
+analysis = ["matplotlib>=3.8,<4"]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+carbon-scheduler = "carbon_scheduler.workflow:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/carbon_scheduler", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
