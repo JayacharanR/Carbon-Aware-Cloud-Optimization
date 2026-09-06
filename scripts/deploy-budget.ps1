@@ -4,8 +4,6 @@ Creates or updates the subscription budget only when -Apply is specified.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$ParameterFile,
 
     [string]$SubscriptionId,
@@ -16,6 +14,16 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$envLoader = Join-Path $PSScriptRoot 'load-project-env.ps1'
+if (Test-Path -LiteralPath $envLoader -PathType Leaf) {
+    . $envLoader
+    Import-ProjectDotEnv -Path (Join-Path $repoRoot '.env')
+}
+$ParameterFile = if ($ParameterFile) { $ParameterFile } else { Join-Path $repoRoot 'infra/bicep/budget.bicepparam' }
+if (-not (Test-Path -LiteralPath $ParameterFile -PathType Leaf)) {
+    throw "Budget parameter file was not found: $ParameterFile. Run python scripts/bootstrap.py --phase infra first."
+}
+$SubscriptionId = if ($SubscriptionId) { $SubscriptionId } else { $env:AZURE_SUBSCRIPTION_ID }
 $template = Join-Path $repoRoot 'infra/bicep/budget.bicep'
 $content = Get-Content -Raw $ParameterFile
 

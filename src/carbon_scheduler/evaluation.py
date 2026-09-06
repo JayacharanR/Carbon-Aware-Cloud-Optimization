@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import threading
+import types
 from dataclasses import dataclass
 from typing import Any, Iterable, Protocol
 
@@ -150,8 +152,7 @@ class RagasOllamaEvaluator:
     ) -> RagasScores:
         try:
             from openai import AsyncOpenAI
-            from ragas.llms import llm_factory
-            from ragas.metrics.collections import ContextPrecision, Faithfulness
+            llm_factory, ContextPrecision, Faithfulness = _import_ragas_dependencies()
         except ImportError as error:
             raise TrustEvaluationError(
                 "RAGAS evaluation dependencies are not installed; install the agent extra"
@@ -182,6 +183,34 @@ class RagasOllamaEvaluator:
             )
         finally:
             await client.close()
+
+
+def _import_ragas_dependencies() -> tuple[Any, Any, Any]:
+    """Load RAGAS metrics across current LangChain community package layouts.
+
+    RAGAS 0.4.x still imports ``langchain_community.chat_models.vertexai``
+    unconditionally, although recent ``langchain-community`` releases moved
+    that integration to a separate package.  The scheduler uses RAGAS with an
+    OpenAI-compatible Ollama client, so the Vertex AI class is never
+    instantiated.  Registering a marker class only for that unused import
+    keeps the supported Ollama path working without adding Google credentials
+    or an unrelated provider dependency.  Any other import error is surfaced
+    to the trust gate, which then fails closed to MILP.
+    """
+
+    try:
+        from ragas.llms import llm_factory
+        from ragas.metrics.collections import ContextPrecision, Faithfulness
+    except ModuleNotFoundError as error:
+        if error.name != "langchain_community.chat_models.vertexai":
+            raise
+        module_name = error.name
+        compatibility_module = types.ModuleType(module_name)
+        compatibility_module.ChatVertexAI = type("ChatVertexAI", (), {})
+        sys.modules[module_name] = compatibility_module
+        from ragas.llms import llm_factory
+        from ragas.metrics.collections import ContextPrecision, Faithfulness
+    return llm_factory, ContextPrecision, Faithfulness
 
 
 def _score_value(value: Any) -> float:

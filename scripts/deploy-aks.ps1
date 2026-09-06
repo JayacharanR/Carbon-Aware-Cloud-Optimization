@@ -5,16 +5,10 @@ only when -Apply is supplied.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$ParameterFile,
 
-    [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
     [string]$BudgetName,
 
-    [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
     [string]$DeploymentLocation,
 
     [string]$SubscriptionId,
@@ -25,6 +19,20 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$envLoader = Join-Path $PSScriptRoot 'load-project-env.ps1'
+if (Test-Path -LiteralPath $envLoader -PathType Leaf) {
+    . $envLoader
+    Import-ProjectDotEnv -Path (Join-Path $repoRoot '.env')
+}
+$ParameterFile = if ($ParameterFile) { $ParameterFile } else { Join-Path $repoRoot 'infra/bicep/main.bicepparam' }
+if (-not (Test-Path -LiteralPath $ParameterFile -PathType Leaf)) {
+    throw "AKS parameter file was not found: $ParameterFile. Run python scripts/bootstrap.py --phase infra first."
+}
+$SubscriptionId = if ($SubscriptionId) { $SubscriptionId } else { $env:AZURE_SUBSCRIPTION_ID }
+$BudgetName = if ($BudgetName) { $BudgetName } else { $env:AZURE_BUDGET_NAME }
+$DeploymentLocation = if ($DeploymentLocation) { $DeploymentLocation } else { $env:AZURE_DEPLOYMENT_LOCATION }
+if ([string]::IsNullOrWhiteSpace($BudgetName)) { throw 'BudgetName is required; set AZURE_BUDGET_NAME in .env.' }
+if ([string]::IsNullOrWhiteSpace($DeploymentLocation)) { throw 'DeploymentLocation is required; set AZURE_DEPLOYMENT_LOCATION in .env.' }
 $template = Join-Path $repoRoot 'infra/bicep/main.bicep'
 $content = Get-Content -Raw $ParameterFile
 

@@ -9,6 +9,7 @@ venv/
 # Local configuration and secrets
 config/experiment.yaml
 config/targets.yaml
+config/latency_catalog.yaml
 config/*.local.yaml
 .env
 .env.*
@@ -22,6 +23,9 @@ artifacts/runs/*
 !artifacts/runs/.gitkeep
 artifacts/plots/*
 !artifacts/plots/.gitkeep
+artifacts/carbon-trace.json
+artifacts/graph.json
+artifacts/dsb-*.yaml
 
 # Local infrastructure state
 infra/**/*.parameters.json

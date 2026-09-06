@@ -22,6 +22,32 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 
+def load_project_environment(
+    path: str | Path | None = None,
+    *,
+    override: bool = False,
+) -> Path | None:
+    """Load the repository's ignored ``.env`` file when available.
+
+    Shell-provided values win by default.  This keeps CI/Kubernetes secrets
+    authoritative while allowing a local checkout to be started from one
+    operator-managed file.  The function deliberately returns only the path;
+    it never prints values or copies secrets into run artifacts.
+    """
+
+    dotenv_path = resolve_path(path or ".env")
+    if not dotenv_path.exists():
+        return None
+    try:
+        from dotenv import load_dotenv
+    except ImportError as error:  # pragma: no cover - guarded by package dependency
+        raise RuntimeError(
+            "python-dotenv is required to load .env; reinstall the project dependencies"
+        ) from error
+    load_dotenv(dotenv_path=dotenv_path, override=override)
+    return dotenv_path
+
+
 def parse_datetime(value: str) -> datetime:
     """Parse an ISO timestamp and require an explicit timezone."""
 
@@ -39,6 +65,12 @@ def parse_datetime(value: str) -> datetime:
 def resolve_path(value: str | Path, *, base: Path = REPO_ROOT) -> Path:
     path = Path(value)
     return path if path.is_absolute() else base / path
+
+
+# Python entry-point scripts import this module before reading any required
+# environment variable.  Loading here makes the documented `.env` workflow
+# work for local commands without changing Kubernetes/CI precedence.
+load_project_environment()
 
 
 def required_environment(name: str) -> str:

@@ -4,8 +4,8 @@ All cloud-mutating scripts require an explicit `-Apply` switch or operate only o
 
 Suggested order:
 
-1. Set non-versioned environment variables for `ELECTRICITY_MAPS_API_KEY`, `OLLAMA_BASE_URL`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, and `QDRANT_API_KEY` in the active shell. Do not put them in a committed file.
-2. Fill a private Bicep parameter file from the examples. Create the subscription budget with `deploy-budget.ps1 -Apply`, then run `azure-preflight.ps1`.
+1. Copy `.env.example` to `.env` and fill it locally. Python scripts and the PowerShell scripts load this file automatically. Do not put secrets in a committed file.
+2. Run `python scripts/bootstrap.py --phase infra` to render private Bicep parameter files. Create the subscription budget with `deploy-budget.ps1 -Apply`, then run `azure-preflight.ps1`.
 3. Review `deploy-aks.ps1` without `-Apply`; after the what-if and budget pass, re-run with `-Apply`.
 4. Start both clusters with `start-azure.ps1`, build/push the controller and `dsb-tools` images, then apply the controller-side platform with `deploy-platform.ps1 -Apply`.
 5. Check out DeathStarBench at an immutable SHA with its submodules initialized. Run `install-deathstarbench.ps1 -Apply` once per regional context, using separate rendered-manifest artifact paths.
@@ -13,6 +13,12 @@ Suggested order:
 7. Use `stop-azure.ps1` with the real run ID and artifact directory after collection. `-SkipCollection` is an explicit escape hatch, not the normal workflow.
 
 `azure-preflight.ps1` verifies local tooling, the active Azure subscription, presence of a subscription budget, region/SKU signals, a local Ollama endpoint, and static manifest rendering. It cannot prove live Azure capacity, quota, the future availability of a spot VM, or Electricity Maps provider-region coverage. The Python configuration/carbon preflight must make those authenticated, experiment-specific checks before provisioning or running the main study.
+
+After the pilot has produced measured p95/error values, run
+`python scripts/bootstrap.py --phase experiment` to render the completed
+experiment, target, and latency files. The bootstrapper is deliberately strict:
+it does not invent endpoints, workload rates, SLOs, trust weights, or latency
+measurements.
 
 ## Python commands
 

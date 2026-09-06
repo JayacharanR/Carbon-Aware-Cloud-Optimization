@@ -5,23 +5,17 @@ shared namespaces/RBAC to both regional clusters, only when -Apply is present.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$PrimaryContext,
-    [Parameter(Mandatory)][string]$SecondaryContext,
-    [Parameter(Mandatory)]
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
+    [string]$PrimaryContext,
+    [string]$SecondaryContext,
     [string]$ExperimentConfigPath,
-    [Parameter(Mandatory)][string]$ControllerImage,
-    [Parameter(Mandatory)][string]$OllamaBaseUrl,
-    [string]$ControllerCommand = 'python -m carbon_scheduler.controller',
+    [string]$ControllerImage,
+    [string]$OllamaBaseUrl,
+    [string]$ControllerCommand,
     [ValidateSet('llm_only', 'milp_only', 'hybrid', 'static_reference')]
     [string]$ExperimentMode,
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$ReplayTracePath,
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$GraphPath,
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$TargetConfigPath,
-    [ValidateScript({ Test-Path $_ -PathType Leaf })]
     [string]$LatencyCatalogPath,
     [switch]$Apply
 )
@@ -29,6 +23,31 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$envLoader = Join-Path $PSScriptRoot 'load-project-env.ps1'
+if (Test-Path -LiteralPath $envLoader -PathType Leaf) {
+    . $envLoader
+    Import-ProjectDotEnv -Path (Join-Path $repoRoot '.env')
+}
+
+$PrimaryContext = if ($PrimaryContext) { $PrimaryContext } else { $env:TARGET_PRIMARY_KUBE_CONTEXT }
+$SecondaryContext = if ($SecondaryContext) { $SecondaryContext } else { $env:TARGET_SECONDARY_KUBE_CONTEXT }
+$ExperimentConfigPath = if ($ExperimentConfigPath) { $ExperimentConfigPath } else { Join-Path $repoRoot 'config/experiment.yaml' }
+$ControllerImage = if ($ControllerImage) { $ControllerImage } else { $env:CONTROLLER_IMAGE }
+$OllamaBaseUrl = if ($OllamaBaseUrl) { $OllamaBaseUrl } else { $env:OLLAMA_BASE_URL }
+$ControllerCommand = if ($ControllerCommand) { $ControllerCommand } else { $env:CONTROLLER_COMMAND }
+$ControllerCommand = if ($ControllerCommand) { $ControllerCommand } else { 'python -m carbon_scheduler.controller' }
+foreach ($required in @{
+    PrimaryContext = $PrimaryContext
+    SecondaryContext = $SecondaryContext
+    ExperimentConfigPath = $ExperimentConfigPath
+    ControllerImage = $ControllerImage
+    OllamaBaseUrl = $OllamaBaseUrl
+}) {
+    if ([string]::IsNullOrWhiteSpace($required.Value)) { throw "$($required.Key) is required; set it in .env or pass the parameter." }
+}
+if (-not (Test-Path -LiteralPath $ExperimentConfigPath -PathType Leaf)) {
+    throw "ExperimentConfigPath was not found: $ExperimentConfigPath. Render it with bootstrap.py first."
+}
 
 if (-not $Apply) {
     throw 'This command changes Kubernetes clusters. Re-run with -Apply after reviewing the active contexts and completed configuration.'
@@ -133,6 +152,11 @@ if ($hasAnyRunInput) {
         [string]::IsNullOrWhiteSpace($TargetConfigPath) -or
         [string]::IsNullOrWhiteSpace($LatencyCatalogPath)) {
         throw 'ExperimentMode, ReplayTracePath, GraphPath, TargetConfigPath, and LatencyCatalogPath must be supplied together for a run.'
+    }
+    foreach ($runInput in @($ReplayTracePath, $GraphPath, $TargetConfigPath, $LatencyCatalogPath)) {
+        if (-not (Test-Path -LiteralPath $runInput -PathType Leaf)) {
+            throw "Configured run input was not found: $runInput"
+        }
     }
     $inputConfigYaml = & kubectl --context $PrimaryContext --namespace scheduler-system create configmap scheduler-run-inputs `
         "--from-file=carbon-trace.json=$ReplayTracePath" `

@@ -1,5 +1,13 @@
 # Detailed Implementation Plan: Trust-Gated Carbon-Aware Scheduling Prototype
 
+> Agent handoff and plug-and-play completion status: see
+> [AGENT_IMPLEMENTATION_PLAN.md](AGENT_IMPLEMENTATION_PLAN.md). The companion
+> `.env.example`, `scripts/bootstrap.py`, and
+> `scripts/install-prerequisites.ps1` now provide the operator-to-runtime
+> configuration path. See [PLUG_AND_PLAY_SETUP.md](PLUG_AND_PLAY_SETUP.md) for
+> where each external value comes from; real Azure/API/DeathStarBench values remain external
+> inputs and are never invented.
+
 ## 1. Project definition and fixed scope
 
 ### Goal

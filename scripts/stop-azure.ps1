@@ -17,6 +17,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$envLoader = Join-Path $PSScriptRoot 'load-project-env.ps1'
+if (Test-Path -LiteralPath $envLoader -PathType Leaf) {
+    . $envLoader
+    Import-ProjectDotEnv -Path (Join-Path $repoRoot '.env')
+}
 
 if (-not (Get-Command az -ErrorAction SilentlyContinue)) { throw 'Azure CLI (az) is required.' }
 if ($SubscriptionId) {
