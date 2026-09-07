@@ -22,8 +22,10 @@ spec:
         - name: reset
           image: "${DSB_TOOLS_IMAGE}"
           imagePullPolicy: IfNotPresent
+          workingDir: /opt/deathstarbench/socialNetwork
           command: ["/usr/bin/python3", "/opt/deathstarbench/socialNetwork/scripts/init_social_graph.py"]
           args:
             - "--graph=${GRAPH_DATASET}"
             - "--ip=${FRONTEND_HOST}"
             - "--port=${FRONTEND_PORT}"
+            - "--limit=${SEED_LIMIT}"

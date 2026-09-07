@@ -2,5 +2,15 @@
 # This uses a single replica per chart service to stay within the course-scale
 # scope. It does not add cross-region replication or persistence semantics.
 global:
+  # The two-node AKS pilot uses low request rates and one replica per service.
+  # Keep limits at the upstream course-scale value while lowering requests so
+  # all services can be scheduled without adding a third billable node.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
   replicas: 1
   imagePullPolicy: IfNotPresent

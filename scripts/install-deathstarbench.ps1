@@ -66,7 +66,10 @@ $workloadPath = Join-Path $DeathStarBenchSource "socialNetwork/wrk2/scripts/soci
 if (-not (Test-Path $chartPath -PathType Container)) { throw "Expected Social Network Helm chart was not found: $chartPath" }
 if (-not (Test-Path $workloadPath -PathType Leaf)) { throw "Expected upstream workload script was not found: $workloadPath" }
 
-& helm dependency build $chartPath
+# Rebuild from Chart.lock without refreshing remote indexes. The pinned chart
+# dependencies are already verified/cached locally; refreshing here makes a
+# repeatable install depend on a transient GitHub release-asset download.
+& helm dependency build --skip-refresh $chartPath
 if ($LASTEXITCODE -ne 0) { throw 'Helm dependency build failed.' }
 
 $renderedDirectory = Split-Path -Parent $RenderedManifestPath
@@ -92,7 +95,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Unable to render DeathStarBench source ConfigM
 $sourceConfigYaml | & kubectl --context $Context apply -f -
 if ($LASTEXITCODE -ne 0) { throw 'Unable to apply DeathStarBench source ConfigMap.' }
 
-& helm upgrade --install $ReleaseName $chartPath --namespace $Namespace --create-namespace --values $valuesPath --wait --timeout 15m
+& helm --kube-context $Context upgrade --install $ReleaseName $chartPath --namespace $Namespace --create-namespace --values $valuesPath --wait --timeout 15m
 if ($LASTEXITCODE -ne 0) { throw 'Helm installation failed. The rendered manifest artifact was retained for diagnosis.' }
 
 Write-Host "Installed $ReleaseName in $Context at immutable DeathStarBench commit $actualCommit. Seed/reset separately and record its output before treating the fixture as equivalent."

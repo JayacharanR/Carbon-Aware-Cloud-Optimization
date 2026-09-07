@@ -42,7 +42,11 @@ $SecondaryRegion = if ($SecondaryRegion) { $SecondaryRegion } else { $env:AZURE_
 $NodeVmSize = if ($NodeVmSize) { $NodeVmSize } else { $env:AZURE_NODE_VM_SIZE }
 $SubscriptionId = if ($SubscriptionId) { $SubscriptionId } else { $env:AZURE_SUBSCRIPTION_ID }
 $BudgetName = if ($BudgetName) { $BudgetName } else { $env:AZURE_BUDGET_NAME }
-foreach ($region in @{'PrimaryRegion'=$PrimaryRegion; 'SecondaryRegion'=$SecondaryRegion}) {
+$regionChecks = @(
+    [pscustomobject]@{ Key = 'PrimaryRegion'; Value = $PrimaryRegion }
+    [pscustomobject]@{ Key = 'SecondaryRegion'; Value = $SecondaryRegion }
+)
+foreach ($region in $regionChecks) {
     if ([string]::IsNullOrWhiteSpace($region.Value) -or $region.Value -notmatch '^[a-z0-9]+$') {
         throw "$($region.Key) must be a lowercase Azure region; set it in .env or pass the parameter."
     }

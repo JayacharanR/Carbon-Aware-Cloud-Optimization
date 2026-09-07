@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reset-demo-primary-seed-v2
+  namespace: benchmark
+  labels:
+    app.kubernetes.io/name: social-network-reset
+    app.kubernetes.io/part-of: trust-gated-carbon-scheduler
+    scheduler.carbonscheduler.io/cycle-id: demo-primary-seed-v2
+    carbon-scheduler/run-id: demo-primary-seed-v2
+    carbon-scheduler/cycle-id: demo-primary-seed-v2
+    carbon-scheduler/mode: seed
+    carbon-scheduler/region: aks-primary-eastus
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 900
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: reset
+        image: docker.io/charan12001200/dsb-tools:v1.0.0
+        imagePullPolicy: IfNotPresent
+        command:
+        - /usr/bin/python3
+        - /opt/deathstarbench/socialNetwork/scripts/init_social_graph.py
+        args:
+        - --graph=socfb-Reed98
+        - --ip=nginx-thrift.benchmark.svc.cluster.local
+        - --port=8080
+        env:
+        - name: ACTIVE_DEADLINE_SECONDS
+          value: '900'
+        - name: CYCLE_ID
+          value: demo-primary-seed-v2
+        - name: DSB_TOOLS_IMAGE
+          value: docker.io/charan12001200/dsb-tools:v1.0.0
+        - name: FRONTEND_HOST
+          value: nginx-thrift.benchmark.svc.cluster.local
+        - name: FRONTEND_PORT
+          value: '8080'
+        - name: GRAPH_DATASET
+          value: socfb-Reed98
+    metadata:
+      labels:
+        carbon-scheduler/run-id: demo-primary-seed-v2
+        carbon-scheduler/cycle-id: demo-primary-seed-v2
+        carbon-scheduler/mode: seed
+        carbon-scheduler/region: aks-primary-eastus

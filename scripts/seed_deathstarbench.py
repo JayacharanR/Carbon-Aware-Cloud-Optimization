@@ -31,6 +31,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--graph-dataset", required=True)
     parser.add_argument("--frontend-host", required=True)
     parser.add_argument("--frontend-port", type=int, default=8080)
+    parser.add_argument(
+        "--seed-limit",
+        type=int,
+        default=50,
+        help="maximum concurrent requests used by the upstream graph initializer",
+    )
     parser.add_argument("--active-deadline-seconds", type=int, default=900)
     parser.add_argument("--output", help="rendered Job YAML path; stdout if omitted")
     parser.add_argument("--apply", action="store_true", help="apply to the named context")
@@ -54,6 +60,7 @@ def render_seed(args: argparse.Namespace) -> dict[str, object]:
             "GRAPH_DATASET": args.graph_dataset,
             "FRONTEND_HOST": args.frontend_host,
             "FRONTEND_PORT": str(args.frontend_port),
+            "SEED_LIMIT": str(args.seed_limit),
             "ACTIVE_DEADLINE_SECONDS": str(args.active_deadline_seconds),
         },
     )

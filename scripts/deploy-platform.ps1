@@ -36,13 +36,14 @@ $ControllerImage = if ($ControllerImage) { $ControllerImage } else { $env:CONTRO
 $OllamaBaseUrl = if ($OllamaBaseUrl) { $OllamaBaseUrl } else { $env:OLLAMA_BASE_URL }
 $ControllerCommand = if ($ControllerCommand) { $ControllerCommand } else { $env:CONTROLLER_COMMAND }
 $ControllerCommand = if ($ControllerCommand) { $ControllerCommand } else { 'python -m carbon_scheduler.controller' }
-foreach ($required in @{
-    PrimaryContext = $PrimaryContext
-    SecondaryContext = $SecondaryContext
-    ExperimentConfigPath = $ExperimentConfigPath
-    ControllerImage = $ControllerImage
-    OllamaBaseUrl = $OllamaBaseUrl
-}) {
+$requiredValues = @(
+    [pscustomobject]@{ Key = 'PrimaryContext'; Value = $PrimaryContext }
+    [pscustomobject]@{ Key = 'SecondaryContext'; Value = $SecondaryContext }
+    [pscustomobject]@{ Key = 'ExperimentConfigPath'; Value = $ExperimentConfigPath }
+    [pscustomobject]@{ Key = 'ControllerImage'; Value = $ControllerImage }
+    [pscustomobject]@{ Key = 'OllamaBaseUrl'; Value = $OllamaBaseUrl }
+)
+foreach ($required in $requiredValues) {
     if ([string]::IsNullOrWhiteSpace($required.Value)) { throw "$($required.Key) is required; set it in .env or pass the parameter." }
 }
 if (-not (Test-Path -LiteralPath $ExperimentConfigPath -PathType Leaf)) {

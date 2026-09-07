@@ -501,6 +501,7 @@ def _render_job(
         "WORKLOAD_PROFILE": environment.get("WORKLOAD_PROFILE", ""),
         "DSB_TOOLS_IMAGE": environment.get("DSB_TOOLS_IMAGE", ""),
         "GRAPH_DATASET": environment.get("GRAPH_DATASET", ""),
+        "SEED_LIMIT": environment.get("SEED_LIMIT", "50"),
         "ACTIVE_DEADLINE_SECONDS": environment.get("ACTIVE_DEADLINE_SECONDS", ""),
         "WRK_THREADS": environment.get("WRK_THREADS", ""),
         "WRK_CONNECTIONS": environment.get("WRK_CONNECTIONS", ""),
