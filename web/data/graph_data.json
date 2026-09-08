@@ -1,0 +1,304 @@
+{
+  "edges": [],
+  "generated_at": "2026-09-07T18:19:08.062653+00:00",
+  "nodes": [
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "compose-post-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "home-timeline-redis",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "home-timeline-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "jaeger",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "media-frontend",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "media-memcached",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "media-mongodb",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "media-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "nginx-thrift",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "post-storage-memcached",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "post-storage-mongodb",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "post-storage-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "social-graph-mongodb",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "social-graph-redis",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "social-graph-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "text-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "unique-id-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "url-shorten-memcached",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "url-shorten-mongodb",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "url-shorten-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-memcached",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-mention-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-mongodb",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-timeline-mongodb",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-timeline-redis",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    },
+    {
+      "kinds": [
+        "deployment",
+        "service"
+      ],
+      "name": "user-timeline-service",
+      "namespaces": [],
+      "source_paths": [
+        "dsb-primary.yaml"
+      ]
+    }
+  ],
+  "source_type": "manifest-derived"
+}

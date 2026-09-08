@@ -1,0 +1,2553 @@
+{
+  "manifest": {
+    "carbon_trace_hash": "86720a6db1778efc096e2d8cee9c57d8c69ea8704f9306daa84c1dfd33d6cd01",
+    "carbon_trace_path": "/home/charan/Project/Carbon-Aware Cloud Optimization/artifacts/carbon-trace.json",
+    "configuration_hash": "805aefd896ab1e8f7fe6a07d4288fbb47f07265c669adccea4ef3261040c8dab",
+    "configuration_path": "/home/charan/Project/Carbon-Aware Cloud Optimization/config/experiment.yaml",
+    "created_at": "2026-09-07T18:39:49.081200+00:00",
+    "demo": false,
+    "dry_run": false,
+    "format_version": 1,
+    "graph_hash": "46b8c611ceba94a785b2eb534106996ec047758bed061451d5e4e55fad6621c0",
+    "latency_catalog_hash": "c02d9cd41f0e64e46ed8fe2ee1344370386b3607350b393033292ee8e17bba10",
+    "latency_catalog_path": "/home/charan/Project/Carbon-Aware Cloud Optimization/config/latency_catalog.yaml",
+    "mode": "milp_only",
+    "notes": "Replay experiment artifact; inspect raw records before reporting.",
+    "orchestration_backend": "direct",
+    "retrieval_backend": "in_memory",
+    "run_id": "real-milp-pilot-v2",
+    "target_config_hash": "fe6122716a9c396ab48ea17e8d72bb51068b80f60c46f2ed1892e45ed549d8da",
+    "target_config_path": "/home/charan/Project/Carbon-Aware Cloud Optimization/config/targets.yaml"
+  },
+  "cycles": [
+    {
+      "decision_input": {
+        "candidate_regions": [
+          "eastus",
+          "westus2"
+        ],
+        "carbon_snapshot": {
+          "decision_time": "2026-09-07T18:19:51.114357Z",
+          "mode": "replay",
+          "regions": {
+            "eastus": {
+              "captured_at": "2026-09-07T18:19:51.114357Z",
+              "current": {
+                "carbon_intensity_gco2eq_per_kwh": 563.0,
+                "timestamp": "2026-09-07T18:15:00Z"
+              },
+              "fallback_reason": null,
+              "forecast": [
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 563.0,
+                  "timestamp": "2026-09-07T18:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 563.0,
+                  "timestamp": "2026-09-07T18:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 563.0,
+                  "timestamp": "2026-09-07T18:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 567.0,
+                  "timestamp": "2026-09-07T18:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 567.0,
+                  "timestamp": "2026-09-07T18:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 567.0,
+                  "timestamp": "2026-09-07T18:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 569.0,
+                  "timestamp": "2026-09-07T18:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 569.0,
+                  "timestamp": "2026-09-07T18:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 569.0,
+                  "timestamp": "2026-09-07T18:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 570.0,
+                  "timestamp": "2026-09-07T18:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 570.0,
+                  "timestamp": "2026-09-07T18:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 570.0,
+                  "timestamp": "2026-09-07T18:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-07T19:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-07T19:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-07T19:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 574.0,
+                  "timestamp": "2026-09-07T19:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 574.0,
+                  "timestamp": "2026-09-07T19:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 574.0,
+                  "timestamp": "2026-09-07T19:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T19:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T19:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T19:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T19:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T19:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T19:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T21:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T21:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T21:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T21:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T21:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T21:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-07T22:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-07T22:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-07T22:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 588.0,
+                  "timestamp": "2026-09-07T22:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 588.0,
+                  "timestamp": "2026-09-07T22:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 588.0,
+                  "timestamp": "2026-09-07T22:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 587.0,
+                  "timestamp": "2026-09-07T23:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 587.0,
+                  "timestamp": "2026-09-07T23:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 587.0,
+                  "timestamp": "2026-09-07T23:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 591.0,
+                  "timestamp": "2026-09-07T23:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 591.0,
+                  "timestamp": "2026-09-07T23:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 591.0,
+                  "timestamp": "2026-09-07T23:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-08T01:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-08T01:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-08T01:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-08T01:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-08T01:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-08T01:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 559.0,
+                  "timestamp": "2026-09-08T01:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 559.0,
+                  "timestamp": "2026-09-08T01:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 559.0,
+                  "timestamp": "2026-09-08T01:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 540.0,
+                  "timestamp": "2026-09-08T01:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 540.0,
+                  "timestamp": "2026-09-08T01:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 540.0,
+                  "timestamp": "2026-09-08T01:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T02:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T02:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T02:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 503.0,
+                  "timestamp": "2026-09-08T02:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 503.0,
+                  "timestamp": "2026-09-08T02:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 503.0,
+                  "timestamp": "2026-09-08T02:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 486.0,
+                  "timestamp": "2026-09-08T02:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 486.0,
+                  "timestamp": "2026-09-08T02:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 486.0,
+                  "timestamp": "2026-09-08T02:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 465.0,
+                  "timestamp": "2026-09-08T02:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 465.0,
+                  "timestamp": "2026-09-08T02:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 465.0,
+                  "timestamp": "2026-09-08T02:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 452.0,
+                  "timestamp": "2026-09-08T03:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 452.0,
+                  "timestamp": "2026-09-08T03:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 452.0,
+                  "timestamp": "2026-09-08T03:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 440.0,
+                  "timestamp": "2026-09-08T03:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 440.0,
+                  "timestamp": "2026-09-08T03:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 440.0,
+                  "timestamp": "2026-09-08T03:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 432.0,
+                  "timestamp": "2026-09-08T03:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 432.0,
+                  "timestamp": "2026-09-08T03:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 432.0,
+                  "timestamp": "2026-09-08T03:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 424.0,
+                  "timestamp": "2026-09-08T03:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 424.0,
+                  "timestamp": "2026-09-08T03:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 424.0,
+                  "timestamp": "2026-09-08T03:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 409.0,
+                  "timestamp": "2026-09-08T04:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 409.0,
+                  "timestamp": "2026-09-08T04:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 409.0,
+                  "timestamp": "2026-09-08T04:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T04:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T04:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T04:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 389.0,
+                  "timestamp": "2026-09-08T04:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 389.0,
+                  "timestamp": "2026-09-08T04:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 389.0,
+                  "timestamp": "2026-09-08T04:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 385.0,
+                  "timestamp": "2026-09-08T04:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 385.0,
+                  "timestamp": "2026-09-08T04:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 385.0,
+                  "timestamp": "2026-09-08T04:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T05:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T05:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T05:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T05:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T05:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T05:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T06:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T06:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T06:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 366.0,
+                  "timestamp": "2026-09-08T06:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 366.0,
+                  "timestamp": "2026-09-08T06:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 366.0,
+                  "timestamp": "2026-09-08T06:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 365.0,
+                  "timestamp": "2026-09-08T07:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 365.0,
+                  "timestamp": "2026-09-08T07:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 365.0,
+                  "timestamp": "2026-09-08T07:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 363.0,
+                  "timestamp": "2026-09-08T07:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 363.0,
+                  "timestamp": "2026-09-08T07:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 363.0,
+                  "timestamp": "2026-09-08T07:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 362.0,
+                  "timestamp": "2026-09-08T08:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 362.0,
+                  "timestamp": "2026-09-08T08:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 362.0,
+                  "timestamp": "2026-09-08T08:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 371.0,
+                  "timestamp": "2026-09-08T08:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 371.0,
+                  "timestamp": "2026-09-08T08:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 371.0,
+                  "timestamp": "2026-09-08T08:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T09:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T09:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T09:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T09:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T09:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T09:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 383.0,
+                  "timestamp": "2026-09-08T09:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 383.0,
+                  "timestamp": "2026-09-08T09:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 383.0,
+                  "timestamp": "2026-09-08T09:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 395.0,
+                  "timestamp": "2026-09-08T09:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 395.0,
+                  "timestamp": "2026-09-08T09:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 395.0,
+                  "timestamp": "2026-09-08T09:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T10:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T10:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T10:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 410.0,
+                  "timestamp": "2026-09-08T10:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 410.0,
+                  "timestamp": "2026-09-08T10:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 410.0,
+                  "timestamp": "2026-09-08T10:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 425.0,
+                  "timestamp": "2026-09-08T10:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 425.0,
+                  "timestamp": "2026-09-08T10:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 425.0,
+                  "timestamp": "2026-09-08T10:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 435.0,
+                  "timestamp": "2026-09-08T10:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 435.0,
+                  "timestamp": "2026-09-08T10:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 435.0,
+                  "timestamp": "2026-09-08T10:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 446.0,
+                  "timestamp": "2026-09-08T11:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 446.0,
+                  "timestamp": "2026-09-08T11:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 446.0,
+                  "timestamp": "2026-09-08T11:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 451.0,
+                  "timestamp": "2026-09-08T11:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 451.0,
+                  "timestamp": "2026-09-08T11:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 451.0,
+                  "timestamp": "2026-09-08T11:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 453.0,
+                  "timestamp": "2026-09-08T11:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 453.0,
+                  "timestamp": "2026-09-08T11:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 453.0,
+                  "timestamp": "2026-09-08T11:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 467.0,
+                  "timestamp": "2026-09-08T11:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 467.0,
+                  "timestamp": "2026-09-08T11:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 467.0,
+                  "timestamp": "2026-09-08T11:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 477.0,
+                  "timestamp": "2026-09-08T12:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 477.0,
+                  "timestamp": "2026-09-08T12:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 477.0,
+                  "timestamp": "2026-09-08T12:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 487.0,
+                  "timestamp": "2026-09-08T12:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 487.0,
+                  "timestamp": "2026-09-08T12:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 487.0,
+                  "timestamp": "2026-09-08T12:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 498.0,
+                  "timestamp": "2026-09-08T12:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 498.0,
+                  "timestamp": "2026-09-08T12:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 498.0,
+                  "timestamp": "2026-09-08T12:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 516.0,
+                  "timestamp": "2026-09-08T12:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 516.0,
+                  "timestamp": "2026-09-08T12:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 516.0,
+                  "timestamp": "2026-09-08T12:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T13:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T13:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T13:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T13:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T13:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T13:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T14:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T14:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T14:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T14:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T14:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T14:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T15:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T15:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T15:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T15:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T15:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T15:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 528.0,
+                  "timestamp": "2026-09-08T15:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 528.0,
+                  "timestamp": "2026-09-08T15:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 528.0,
+                  "timestamp": "2026-09-08T15:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 531.0,
+                  "timestamp": "2026-09-08T15:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 531.0,
+                  "timestamp": "2026-09-08T15:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 531.0,
+                  "timestamp": "2026-09-08T15:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T16:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T16:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T16:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 532.0,
+                  "timestamp": "2026-09-08T17:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 532.0,
+                  "timestamp": "2026-09-08T17:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 532.0,
+                  "timestamp": "2026-09-08T17:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 537.0,
+                  "timestamp": "2026-09-08T17:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 537.0,
+                  "timestamp": "2026-09-08T17:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 537.0,
+                  "timestamp": "2026-09-08T17:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 538.0,
+                  "timestamp": "2026-09-08T18:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 538.0,
+                  "timestamp": "2026-09-08T18:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 538.0,
+                  "timestamp": "2026-09-08T18:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 539.0,
+                  "timestamp": "2026-09-08T18:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 539.0,
+                  "timestamp": "2026-09-08T18:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 539.0,
+                  "timestamp": "2026-09-08T18:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 543.0,
+                  "timestamp": "2026-09-08T18:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 543.0,
+                  "timestamp": "2026-09-08T18:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 543.0,
+                  "timestamp": "2026-09-08T18:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 544.0,
+                  "timestamp": "2026-09-08T18:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 544.0,
+                  "timestamp": "2026-09-08T18:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 544.0,
+                  "timestamp": "2026-09-08T18:55:00Z"
+                }
+              ],
+              "provider_region": "eastus",
+              "raw_source_hash": "793c912041817cd3a1b4e4234daa51c8d7789ef0b49d70dc458e5ccd16046ac9",
+              "raw_source_path": "/home/charan/Project/Carbon-Aware Cloud Optimization/data/carbon_cache/eastus/20260907T181951114357Z-661045c226084d8896688a269257b514.json",
+              "source": "replay"
+            },
+            "westus2": {
+              "captured_at": "2026-09-07T18:19:51.114357Z",
+              "current": {
+                "carbon_intensity_gco2eq_per_kwh": 563.0,
+                "timestamp": "2026-09-07T18:15:00Z"
+              },
+              "fallback_reason": null,
+              "forecast": [
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 563.0,
+                  "timestamp": "2026-09-07T18:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 563.0,
+                  "timestamp": "2026-09-07T18:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 563.0,
+                  "timestamp": "2026-09-07T18:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 567.0,
+                  "timestamp": "2026-09-07T18:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 567.0,
+                  "timestamp": "2026-09-07T18:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 567.0,
+                  "timestamp": "2026-09-07T18:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 569.0,
+                  "timestamp": "2026-09-07T18:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 569.0,
+                  "timestamp": "2026-09-07T18:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 569.0,
+                  "timestamp": "2026-09-07T18:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 570.0,
+                  "timestamp": "2026-09-07T18:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 570.0,
+                  "timestamp": "2026-09-07T18:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 570.0,
+                  "timestamp": "2026-09-07T18:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-07T19:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-07T19:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-07T19:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 574.0,
+                  "timestamp": "2026-09-07T19:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 574.0,
+                  "timestamp": "2026-09-07T19:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 574.0,
+                  "timestamp": "2026-09-07T19:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T19:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T19:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T19:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T19:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T19:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T19:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-07T20:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T21:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T21:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 578.0,
+                  "timestamp": "2026-09-07T21:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-07T21:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T21:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T21:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T21:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-07T22:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-07T22:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-07T22:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 581.0,
+                  "timestamp": "2026-09-07T22:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 588.0,
+                  "timestamp": "2026-09-07T22:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 588.0,
+                  "timestamp": "2026-09-07T22:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 588.0,
+                  "timestamp": "2026-09-07T22:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 587.0,
+                  "timestamp": "2026-09-07T23:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 587.0,
+                  "timestamp": "2026-09-07T23:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 587.0,
+                  "timestamp": "2026-09-07T23:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 586.0,
+                  "timestamp": "2026-09-07T23:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 591.0,
+                  "timestamp": "2026-09-07T23:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 591.0,
+                  "timestamp": "2026-09-07T23:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 591.0,
+                  "timestamp": "2026-09-07T23:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 582.0,
+                  "timestamp": "2026-09-08T00:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 580.0,
+                  "timestamp": "2026-09-08T00:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-08T01:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-08T01:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 577.0,
+                  "timestamp": "2026-09-08T01:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-08T01:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-08T01:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 571.0,
+                  "timestamp": "2026-09-08T01:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 559.0,
+                  "timestamp": "2026-09-08T01:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 559.0,
+                  "timestamp": "2026-09-08T01:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 559.0,
+                  "timestamp": "2026-09-08T01:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 540.0,
+                  "timestamp": "2026-09-08T01:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 540.0,
+                  "timestamp": "2026-09-08T01:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 540.0,
+                  "timestamp": "2026-09-08T01:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T02:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T02:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T02:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 503.0,
+                  "timestamp": "2026-09-08T02:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 503.0,
+                  "timestamp": "2026-09-08T02:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 503.0,
+                  "timestamp": "2026-09-08T02:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 486.0,
+                  "timestamp": "2026-09-08T02:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 486.0,
+                  "timestamp": "2026-09-08T02:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 486.0,
+                  "timestamp": "2026-09-08T02:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 465.0,
+                  "timestamp": "2026-09-08T02:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 465.0,
+                  "timestamp": "2026-09-08T02:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 465.0,
+                  "timestamp": "2026-09-08T02:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 452.0,
+                  "timestamp": "2026-09-08T03:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 452.0,
+                  "timestamp": "2026-09-08T03:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 452.0,
+                  "timestamp": "2026-09-08T03:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 440.0,
+                  "timestamp": "2026-09-08T03:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 440.0,
+                  "timestamp": "2026-09-08T03:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 440.0,
+                  "timestamp": "2026-09-08T03:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 432.0,
+                  "timestamp": "2026-09-08T03:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 432.0,
+                  "timestamp": "2026-09-08T03:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 432.0,
+                  "timestamp": "2026-09-08T03:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 424.0,
+                  "timestamp": "2026-09-08T03:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 424.0,
+                  "timestamp": "2026-09-08T03:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 424.0,
+                  "timestamp": "2026-09-08T03:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 409.0,
+                  "timestamp": "2026-09-08T04:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 409.0,
+                  "timestamp": "2026-09-08T04:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 409.0,
+                  "timestamp": "2026-09-08T04:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T04:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T04:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T04:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 389.0,
+                  "timestamp": "2026-09-08T04:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 389.0,
+                  "timestamp": "2026-09-08T04:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 389.0,
+                  "timestamp": "2026-09-08T04:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 385.0,
+                  "timestamp": "2026-09-08T04:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 385.0,
+                  "timestamp": "2026-09-08T04:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 385.0,
+                  "timestamp": "2026-09-08T04:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T05:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T05:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T05:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T05:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T05:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T05:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 373.0,
+                  "timestamp": "2026-09-08T05:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 370.0,
+                  "timestamp": "2026-09-08T06:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T06:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T06:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T06:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 366.0,
+                  "timestamp": "2026-09-08T06:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 366.0,
+                  "timestamp": "2026-09-08T06:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 366.0,
+                  "timestamp": "2026-09-08T06:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 365.0,
+                  "timestamp": "2026-09-08T07:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 365.0,
+                  "timestamp": "2026-09-08T07:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 365.0,
+                  "timestamp": "2026-09-08T07:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 363.0,
+                  "timestamp": "2026-09-08T07:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 363.0,
+                  "timestamp": "2026-09-08T07:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 363.0,
+                  "timestamp": "2026-09-08T07:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 361.0,
+                  "timestamp": "2026-09-08T07:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 362.0,
+                  "timestamp": "2026-09-08T08:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 362.0,
+                  "timestamp": "2026-09-08T08:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 362.0,
+                  "timestamp": "2026-09-08T08:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 368.0,
+                  "timestamp": "2026-09-08T08:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 371.0,
+                  "timestamp": "2026-09-08T08:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 371.0,
+                  "timestamp": "2026-09-08T08:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 371.0,
+                  "timestamp": "2026-09-08T08:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T09:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T09:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 375.0,
+                  "timestamp": "2026-09-08T09:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T09:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T09:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 380.0,
+                  "timestamp": "2026-09-08T09:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 383.0,
+                  "timestamp": "2026-09-08T09:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 383.0,
+                  "timestamp": "2026-09-08T09:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 383.0,
+                  "timestamp": "2026-09-08T09:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 395.0,
+                  "timestamp": "2026-09-08T09:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 395.0,
+                  "timestamp": "2026-09-08T09:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 395.0,
+                  "timestamp": "2026-09-08T09:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T10:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T10:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 403.0,
+                  "timestamp": "2026-09-08T10:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 410.0,
+                  "timestamp": "2026-09-08T10:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 410.0,
+                  "timestamp": "2026-09-08T10:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 410.0,
+                  "timestamp": "2026-09-08T10:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 425.0,
+                  "timestamp": "2026-09-08T10:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 425.0,
+                  "timestamp": "2026-09-08T10:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 425.0,
+                  "timestamp": "2026-09-08T10:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 435.0,
+                  "timestamp": "2026-09-08T10:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 435.0,
+                  "timestamp": "2026-09-08T10:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 435.0,
+                  "timestamp": "2026-09-08T10:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 446.0,
+                  "timestamp": "2026-09-08T11:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 446.0,
+                  "timestamp": "2026-09-08T11:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 446.0,
+                  "timestamp": "2026-09-08T11:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 451.0,
+                  "timestamp": "2026-09-08T11:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 451.0,
+                  "timestamp": "2026-09-08T11:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 451.0,
+                  "timestamp": "2026-09-08T11:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 453.0,
+                  "timestamp": "2026-09-08T11:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 453.0,
+                  "timestamp": "2026-09-08T11:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 453.0,
+                  "timestamp": "2026-09-08T11:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 467.0,
+                  "timestamp": "2026-09-08T11:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 467.0,
+                  "timestamp": "2026-09-08T11:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 467.0,
+                  "timestamp": "2026-09-08T11:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 477.0,
+                  "timestamp": "2026-09-08T12:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 477.0,
+                  "timestamp": "2026-09-08T12:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 477.0,
+                  "timestamp": "2026-09-08T12:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 487.0,
+                  "timestamp": "2026-09-08T12:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 487.0,
+                  "timestamp": "2026-09-08T12:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 487.0,
+                  "timestamp": "2026-09-08T12:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 498.0,
+                  "timestamp": "2026-09-08T12:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 498.0,
+                  "timestamp": "2026-09-08T12:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 498.0,
+                  "timestamp": "2026-09-08T12:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 516.0,
+                  "timestamp": "2026-09-08T12:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 516.0,
+                  "timestamp": "2026-09-08T12:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 516.0,
+                  "timestamp": "2026-09-08T12:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T13:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T13:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T13:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T13:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T13:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T13:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T13:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T14:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T14:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T14:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 523.0,
+                  "timestamp": "2026-09-08T14:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T14:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T14:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T14:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T15:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T15:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 522.0,
+                  "timestamp": "2026-09-08T15:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T15:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T15:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 525.0,
+                  "timestamp": "2026-09-08T15:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 528.0,
+                  "timestamp": "2026-09-08T15:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 528.0,
+                  "timestamp": "2026-09-08T15:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 528.0,
+                  "timestamp": "2026-09-08T15:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 531.0,
+                  "timestamp": "2026-09-08T15:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 531.0,
+                  "timestamp": "2026-09-08T15:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 531.0,
+                  "timestamp": "2026-09-08T15:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T16:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T16:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T16:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 533.0,
+                  "timestamp": "2026-09-08T16:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 532.0,
+                  "timestamp": "2026-09-08T17:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 532.0,
+                  "timestamp": "2026-09-08T17:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 532.0,
+                  "timestamp": "2026-09-08T17:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 534.0,
+                  "timestamp": "2026-09-08T17:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 537.0,
+                  "timestamp": "2026-09-08T17:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 537.0,
+                  "timestamp": "2026-09-08T17:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 537.0,
+                  "timestamp": "2026-09-08T17:55:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 538.0,
+                  "timestamp": "2026-09-08T18:00:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 538.0,
+                  "timestamp": "2026-09-08T18:05:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 538.0,
+                  "timestamp": "2026-09-08T18:10:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 539.0,
+                  "timestamp": "2026-09-08T18:15:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 539.0,
+                  "timestamp": "2026-09-08T18:20:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 539.0,
+                  "timestamp": "2026-09-08T18:25:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 543.0,
+                  "timestamp": "2026-09-08T18:30:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 543.0,
+                  "timestamp": "2026-09-08T18:35:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 543.0,
+                  "timestamp": "2026-09-08T18:40:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 544.0,
+                  "timestamp": "2026-09-08T18:45:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 544.0,
+                  "timestamp": "2026-09-08T18:50:00Z"
+                },
+                {
+                  "carbon_intensity_gco2eq_per_kwh": 544.0,
+                  "timestamp": "2026-09-08T18:55:00Z"
+                }
+              ],
+              "provider_region": "westus2",
+              "raw_source_hash": "e4c1f72e1834c48b4c2532d7bfc314654ab054f9c60a109c8f8c3a07acbe8acd",
+              "raw_source_path": "/home/charan/Project/Carbon-Aware Cloud Optimization/data/carbon_cache/westus2/20260907T181951114357Z-b3febee56ba340049df16996308c9395.json",
+              "source": "replay"
+            }
+          },
+          "snapshot_id": "fd46c6c5-1ee3-4615-886a-6beba626d84b",
+          "source_hash": "7a31aa009aa8b13d872739c5a3c42c2928d38e359e9a6ef92a174943c1a7fb54"
+        },
+        "cluster_available": {
+          "eastus": true,
+          "westus2": true
+        },
+        "config_hash": "805aefd896ab1e8f7fe6a07d4288fbb47f07265c669adccea4ef3261040c8dab",
+        "cycle_id": "real-milp-pilot-v2-cycle-0001",
+        "deadline": "2026-09-07T19:30:00Z",
+        "dependency_context": {
+          "declared_dependencies": [],
+          "graph_source_hash": "46b8c611ceba94a785b2eb534106996ec047758bed061451d5e4e55fad6621c0",
+          "source_type": "manifest",
+          "target_service": "nginx-thrift"
+        },
+        "earliest_start": "2026-09-07T18:15:00Z",
+        "error_rate_limit": 0.05,
+        "p95_slo_limit_ms": 500.0,
+        "retrieval_context_ids": [
+          "f1b62637-6b24-57d6-b047-4101dc33253d",
+          "de77b3dc-e215-5755-b7be-f2d28faf149c"
+        ],
+        "run_id": "real-milp-pilot-v2",
+        "workload_profile": "pilot"
+      },
+      "execution_receipt": {
+        "actual_error_rate": 0.053763440860215055,
+        "actual_p95_latency_ms": 0.33,
+        "benchmark_artifact_paths": [
+          "benchmark-logs/real-milp-pilot-v2-cycle-0001-reset.log",
+          "benchmark-logs/real-milp-pilot-v2-cycle-0001-benchmark.log"
+        ],
+        "cluster_name": "aks-primary-eastus",
+        "completed_at": "2026-09-07T18:43:40.535241Z",
+        "cycle_id": "real-milp-pilot-v2-cycle-0001",
+        "execution_failure_reason": null,
+        "fallback_triggered": false,
+        "final_action": {
+          "action_type": "run_now",
+          "evidence_ids": [],
+          "expected_p95_latency_ms": 120.0,
+          "model_name": "pulp-milp",
+          "prompt_version": "not-applicable",
+          "rationale": "Deterministic scheduling result from the frozen carbon and latency inputs.",
+          "request_id": "milp-real-milp-pilot-v2-cycle-0001",
+          "scheduled_time": "2026-09-07T18:15:00Z",
+          "self_reported_confidence": 0.0,
+          "target_region": "eastus",
+          "target_service": "nginx-thrift",
+          "workload_profile": "pilot"
+        },
+        "job_name": "benchmark-real-milp-pilot-v2-cycle-0001-1f6a2345",
+        "mode": "milp_only",
+        "run_id": "real-milp-pilot-v2",
+        "slo_passed": false,
+        "started_at": "2026-09-07T18:39:49.100440Z"
+      },
+      "failure_reason": null,
+      "mode": "milp_only",
+      "outcome": "executed",
+      "proposal": {
+        "action_type": "run_now",
+        "evidence_ids": [],
+        "expected_p95_latency_ms": 120.0,
+        "model_name": "pulp-milp",
+        "prompt_version": "not-applicable",
+        "rationale": "Deterministic scheduling result from the frozen carbon and latency inputs.",
+        "request_id": "milp-real-milp-pilot-v2-cycle-0001",
+        "scheduled_time": "2026-09-07T18:15:00Z",
+        "self_reported_confidence": 0.0,
+        "target_region": "eastus",
+        "target_service": "nginx-thrift",
+        "workload_profile": "pilot"
+      },
+      "record_type": "scheduler_cycle",
+      "schedule_result": {
+        "action_type": "run_now",
+        "carbon_intensity_gco2eq_per_kwh": 563.0,
+        "expected_p95_latency_ms": 120.0,
+        "objective_value": 563.0,
+        "reason": null,
+        "scheduled_time": "2026-09-07T18:15:00Z",
+        "solver_backend": "pulp",
+        "status": "selected",
+        "target_region": "eastus"
+      },
+      "trust_report": null
+    }
+  ],
+  "benchmark_log": "/workload/traffic.lua: /workload/traffic.lua:1: module 'socket' not found:\n\tno field package.preload['socket']\n\tno file './socket.lua'\n\tno file '/usr/local/share/luajit-2.1/socket.lua'\n\tno file '/usr/local/share/lua/5.1/socket.lua'\n\tno file '/usr/local/share/lua/5.1/socket/init.lua'\n\tno file './socket.so'\n\tno file '/usr/local/lib/lua/5.1/socket.so'\n\tno file '/usr/local/lib/lua/5.1/loadall.so'\n/workload/traffic.lua: /workload/traffic.lua:1: module 'socket' not found:\n\tno field package.preload['socket']\n\tno file './socket.lua'\n\tno file '/usr/local/share/luajit-2.1/socket.lua'\n\tno file '/usr/local/share/lua/5.1/socket.lua'\n\tno file '/usr/local/share/lua/5.1/socket/init.lua'\n\tno file './socket.so'\n\tno file '/usr/local/lib/lua/5.1/socket.so'\n\tno file '/usr/local/lib/lua/5.1/loadall.so'\n/workload/traffic.lua: /workload/traffic.lua:1: module 'socket' not found:\n\tno field package.preload['socket']\n\tno file './socket.lua'\n\tno file '/usr/local/share/luajit-2.1/socket.lua'\n\tno file '/usr/local/share/lua/5.1/socket.lua'\n\tno file '/usr/local/share/lua/5.1/socket/init.lua'\n\tno file './socket.so'\n\tno file '/usr/local/lib/lua/5.1/socket.so'\n\tno file '/usr/local/lib/lua/5.1/loadall.so'\nRunning 1m test @ http://nginx-thrift.benchmark.svc.cluster.local:8080\n  2 threads and 10 connections\n\n  Thread calibration: mean lat.: 0.221ms, rate sampling interval: 10ms\n  Thread calibration: mean lat.: 0.223ms, rate sampling interval: 10ms\n\n-----------------------------------------------------------------------\nTest Results @ http://nginx-thrift.benchmark.svc.cluster.local:8080 \n  Thread Stats   Avg      Stdev     99%   +/- Stdev\n    Latency   222.99us   85.59us 388.00us   70.02%\n    Req/Sec     5.58     23.87   111.00     94.71%\n  Latency Distribution (HdrHistogram - Recorded Latency)\n 50.000%  233.00us\n 75.000%  289.00us\n 90.000%  312.00us\n 99.000%  388.00us\n 99.900%  481.00us\n 99.990%    1.03ms\n 99.999%    1.03ms\n100.000%    1.03ms\n\n  Detailed Percentile spectrum:\n       Value   Percentile   TotalCount 1/(1-Percentile)\n\n       0.073     0.000000            2         1.00\n       0.111     0.100000           54         1.11\n       0.138     0.200000          109         1.25\n       0.168     0.300000          164         1.43\n       0.199     0.400000          215         1.67\n       0.233     0.500000          270         2.00\n       0.246     0.550000          297         2.22\n       0.257     0.600000          323         2.50\n       0.269     0.650000          350         2.86\n       0.281     0.700000          378         3.33\n       0.289     0.750000          404         4.00\n       0.292     0.775000          417         4.44\n       0.295     0.800000          430         5.00\n       0.299     0.825000          444         5.71\n       0.302     0.850000          460         6.67\n       0.306     0.875000          470         8.00\n       0.309     0.887500          477         8.89\n       0.312     0.900000          484        10.00\n       0.316     0.912500          492        11.43\n       0.321     0.925000          497        13.33\n       0.323     0.937500          505        16.00\n       0.324     0.943750          507        17.78\n       0.330     0.950000          512        20.00\n       0.332     0.956250          514        22.86\n       0.334     0.962500          517        26.67\n       0.339     0.968750          521        32.00\n       0.340     0.971875          522        35.56\n       0.343     0.975000          524        40.00\n       0.344     0.978125          526        45.71\n       0.348     0.981250          527        53.33\n       0.366     0.984375          529        64.00\n       0.379     0.985938          530        71.11\n       0.381     0.987500          531        80.00\n       0.388     0.989062          532        91.43\n       0.388     0.990625          532       106.67\n       0.412     0.992188          533       128.00\n       0.419     0.992969          534       142.22\n       0.419     0.993750          534       160.00\n       0.423     0.994531          535       182.86\n       0.423     0.995313          535       213.33\n       0.423     0.996094          535       256.00\n       0.481     0.996484          536       284.44\n       0.481     0.996875          536       320.00\n       0.481     0.997266          536       365.71\n       0.481     0.997656          536       426.67\n       0.481     0.998047          536       512.00\n       1.027     0.998242          537       568.89\n       1.027     1.000000          537          inf\n#[Mean    =        0.223, StdDeviation   =        0.086]\n#[Max     =        1.027, Total count    =          537]\n#[Buckets =           27, SubBuckets     =         2048]\n-----------------------------------------------------------------------\n  651 requests in 1.00m, 1.92MB read\n  Socket errors: connect 0, read 0, write 0, timeout 35\nRequests/sec:     10.85  \nTransfer/sec:     32.71KB\n"
+}

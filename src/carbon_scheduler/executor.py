@@ -201,7 +201,7 @@ class KubernetesBenchmarkExecutor:
                     "ALGORITHM_MODE": mode.value,
                     "TARGET_REGION": target.region,
                     "CARBON_SNAPSHOT_ID": carbon_snapshot_id,
-                    "CONFIG_HASH": config_hash,
+                    "CONFIG_HASH": _label_value(config_hash[:12]),
                     "WORKLOAD_PROFILE": action.workload_profile,
                     "FRONTEND_SERVICE": target.frontend_service,
                 },
@@ -435,19 +435,34 @@ class KubernetesBenchmarkExecutor:
 def parse_benchmark_output(output: str) -> tuple[float | None, float | None]:
     """Extract only explicitly reported p95/error figures from benchmark logs.
 
-    `wrk` commonly reports p99 but not p95.  The parser intentionally leaves
-    p95 as ``None`` instead of relabeling another percentile as p95.
+    `wrk` commonly reports p99 but not p95.  The parser extracts p95 from either
+    the standard percentile summary or the wrk2 HdrHistogram detailed spectrum table.
     """
 
     p95_latency = _find_latency_ms(output, r"(?:p95|95%)\s*(?:latency)?\s*[:=]?\s*([0-9.]+)\s*(us|µs|ms|s)\b")
+    if p95_latency is None:
+        match = re.search(r"^\s*([0-9.]+)\s+0\.950000\b", output, flags=re.MULTILINE)
+        if match:
+            p95_latency = float(match.group(1))
+
     total_requests = _find_number(output, r"\b([0-9][0-9,]*)\s+requests\b")
     non_success = _find_number(
         output,
         r"\bNon-2xx\s+or\s+3xx\s+responses:\s*([0-9][0-9,]*)\b",
     )
+    socket_errors_match = re.search(
+        r"Socket errors:\s*connect\s*(\d+),\s*read\s*(\d+),\s*write\s*(\d+),\s*timeout\s*(\d+)",
+        output,
+    )
+    socket_errors = 0
+    if socket_errors_match:
+        socket_errors = sum(int(socket_errors_match.group(i)) for i in range(1, 5))
+
     error_rate = None
-    if total_requests is not None and total_requests > 0 and non_success is not None:
-        error_rate = non_success / total_requests
+    if total_requests is not None and total_requests > 0:
+        if non_success is not None or socket_errors_match is not None:
+            error_count = (non_success or 0) + socket_errors
+            error_rate = error_count / total_requests
     return p95_latency, error_rate
 
 
@@ -493,8 +508,8 @@ def _render_job(
         "RUN_ID": environment.get("RUN_ID", environment.get("SCHEDULER_RUN_ID", "")),
         "ALGORITHM_MODE": environment.get("ALGORITHM_MODE", labels.get("carbon-scheduler/mode", "")),
         "TARGET_REGION": environment.get("TARGET_REGION", labels.get("carbon-scheduler/region", "")),
-        "CARBON_SNAPSHOT_ID": environment.get("CARBON_SNAPSHOT_ID", labels.get("carbon-scheduler/snapshot-id", "")),
-        "CONFIG_HASH": environment.get("CONFIG_HASH", labels.get("carbon-scheduler/config-hash", "")),
+        "CARBON_SNAPSHOT_ID": _label_value(environment.get("CARBON_SNAPSHOT_ID", labels.get("carbon-scheduler/snapshot-id", ""))),
+        "CONFIG_HASH": _label_value(environment.get("CONFIG_HASH", labels.get("carbon-scheduler/config-hash", ""))),
         "FRONTEND_HOST": environment.get("FRONTEND_HOST", ""),
         "FRONTEND_PORT": environment.get("FRONTEND_PORT", "8080"),
         "TARGET_URL": environment.get("TARGET_URL", ""),

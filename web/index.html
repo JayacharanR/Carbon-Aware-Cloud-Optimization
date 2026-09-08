@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carbon-Aware Cloud Optimization | Multi-Region Trust-Gated AKS Scheduler</title>
+  <meta name="description" content="Autonomous hybrid LLM + MILP scheduler with 5-factor Trust Gate optimizing DeathStarBench microservices across Azure AKS clusters using real-time grid carbon intensity.">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23778DA9'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="header-bar">
+    <div class="container header-container">
+      <div class="brand-group">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Carbon-Aware Cloud Scheduler</h1>
+          <span class="brand-tagline">Azure Multi-Region · Trust-Gated Hybrid AI</span>
+        </div>
+      </div>
+
+      <div class="header-status-group">
+        <div class="status-badge">
+          <span class="pulse-dot"></span>
+          <span>aks-primary-eastus (Ready)</span>
+        </div>
+        <div class="status-badge">
+          <span class="pulse-dot"></span>
+          <span>aks-secondary-westus2 (Ready)</span>
+        </div>
+        <button id="btnTriggerReroute" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="13 17 18 12 13 7"></polyline>
+            <polyline points="6 17 11 12 6 7"></polyline>
+          </svg>
+          Reroute to Clean Region
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Showcase Container -->
+  <main class="container">
+    
+    <!-- Hero Intro -->
+    <section class="hero-section">
+      <div class="hero-intro">
+        <div class="hero-badge-pill">
+          <span>● Live Multi-Region Microservice Telemetry</span>
+        </div>
+        <h2 class="hero-title">Real-Time Carbon-Aware Traffic Director</h2>
+        <p class="hero-description">
+          A hybrid scheduling system combining <strong>LLM cognitive reasoning</strong> with <strong>PuLP MILP mathematical guarantees</strong>, protected by a 5-component fail-closed Trust Gate to dynamically route DeathStarBench microservices to the cleanest power grid.
+        </p>
+      </div>
+
+      <!-- Fluid Traffic Animation Card -->
+      <div class="traffic-orchestration-card">
+        <div class="card-top-bar">
+          <div class="card-title-group">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--c-steel-accent)" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <h2>Cross-Region Workload Flow Director</h2>
+          </div>
+
+          <div class="controls-toolbar">
+            <div class="pill-toggle">
+              <button id="btnResetBaseline" class="pill-btn active">East US (Baseline)</button>
+              <button id="btnTriggerReroute2" class="pill-btn" onclick="document.getElementById('btnTriggerReroute').click()">West US 2 (Clean)</button>
+            </div>
+            <button id="btnSimulateGridSurge" class="btn-secondary" title="Simulate carbon intensity spike in PJM grid">
+              ⚡ Simulate Grid Spike
+            </button>
+            <label style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--c-text-muted); display: flex; align-items: center; gap: 6px;">
+              Flow:
+              <select id="flowSpeedSelect" style="background: var(--c-deep-bg); border: 1px solid var(--c-border-subtle); color: var(--c-crisp-text); padding: 3px 6px; border-radius: 4px; font-family: var(--font-mono);">
+                <option value="0.5">0.5x</option>
+                <option value="1.0" selected>1.0x</option>
+                <option value="2.0">2.0x</option>
+              </select>
+            </label>
+            <label style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--c-text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="autoDemoToggle" checked style="accent-color: var(--c-steel-accent);"> Auto-Demo
+            </label>
+          </div>
+        </div>
+
+        <!-- HTML5 Canvas with Dynamic Particle Engine -->
+        <div class="canvas-wrapper">
+          <canvas id="trafficCanvas"></canvas>
+
+          <!-- Overlay Cluster HUDs -->
+          <div class="cluster-hud-container">
+            <!-- Primary Cluster HUD (East US) -->
+            <div id="primaryClusterHud" class="hud-panel primary-cluster active">
+              <div class="hud-header">
+                <span class="cluster-tag">Azure Primary · East US</span>
+                <span class="pulse-dot crimson"></span>
+              </div>
+              <div class="cluster-name">aks-primary-eastus</div>
+              <div class="carbon-badge high" id="primaryCarbonBadge">
+                <span>⚡ <span id="liveEastIntensity">loading…</span></span>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--c-text-muted);">PJM Interconnection · US-MIDA-PJM</div>
+              <div class="hud-metrics-row">
+                <span>Pods: <span id="metaPrimaryPods">28/28</span></span>
+                <span>VMSS: D2as_v7</span>
+              </div>
+            </div>
+
+            <!-- Central AI Trust Gate HUD -->
+            <div class="hud-panel orchestrator-node">
+              <div class="hud-header" style="justify-content: center;">
+                <span class="cluster-tag">Trust-Gated Hybrid AI</span>
+              </div>
+              <div class="cluster-name" style="font-size: 0.95rem;">Llama-3 + PuLP MILP</div>
+              <div style="font-size: 0.8rem; font-family: var(--font-mono); color: #a8c0dd; margin: 4px 0;">
+                Trust Score: <strong>0.97</strong> (PASS &ge; 0.6)
+              </div>
+              <div style="font-size: 0.72rem; color: var(--c-text-muted);">
+                Fail-closed fallback protection active
+              </div>
+            </div>
+
+            <!-- Secondary Cluster HUD (West US 2) -->
+            <div id="secondaryClusterHud" class="hud-panel secondary-cluster">
+              <div class="hud-header">
+                <span class="cluster-tag">Azure Secondary · West US 2</span>
+                <span class="pulse-dot"></span>
+              </div>
+              <div class="cluster-name">aks-secondary-westus2</div>
+              <div class="carbon-badge clean" id="secondaryCarbonBadge">
+                <span>🍃 <span id="liveWestIntensity">loading…</span></span>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--c-text-muted);">BPA Hydro · US-NW-BPAT</div>
+              <div class="hud-metrics-row">
+                <span>Pods: <span id="metaSecondaryPods">28/28</span></span>
+                <span>Decided: <span id="liveDecisionRegion">—</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="animation-banner">
+          <div id="statusBannerMsg" class="banner-message">
+            <span class="live-indicator crimson">● FETCHING LIVE DATA</span> Connecting to <strong>Electricity Maps API</strong> (US-MIDA-PJM / US-NW-BPAT)…
+          </div>
+          <div style="color: var(--c-text-muted); font-size: 0.78rem; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+            <span>Net Carbon Impact: <span id="liveCarbonDiff" style="color: #ff6b6b; font-weight: 700;">loading…</span></span>
+            <span style="margin-left: auto;"><span id="carbonDataTimestamp" style="font-size:0.72rem; color: var(--c-text-muted);">Fetching Electricity Maps…</span></span>
+            <span>Reduction: <strong id="liveCarbonReduction" style="color:#a8c0dd;">—</strong></span>
+            <span>Last poll: <span id="liveLastPoll" style="font-family: var(--font-mono);">—</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Metrics & Presentation Section -->
+    <section style="padding-bottom: 40px;">
+      <div class="section-title-wrap">
+        <h3>Live Azure Execution & Performance Metrics</h3>
+        <p>Telemetry captured directly from live Azure Kubernetes service execution (Run ID: <code>real-milp-pilot-v2</code>) and comparative benchmarks.</p>
+      </div>
+
+      <div class="dashboard-grid">
+        
+        <!-- Live Run Card: real-milp-pilot-v2 -->
+        <div class="col-6">
+          <div class="metric-card">
+            <div class="card-heading">
+              <h4>Live AKS Workload Receipt</h4>
+              <span class="card-badge" style="background: rgba(119, 141, 169, 0.2); color: #c4d7ed;">real-milp-pilot-v2</span>
+            </div>
+
+            <div class="telemetry-stats-grid">
+              <div class="stat-box">
+                <div class="stat-label">Measured p95 Latency</div>
+                <div class="stat-val highlight-steel" id="statP95Latency">0.33 ms</div>
+                <div class="stat-sub">Strictly &le; 500 ms SLO Limit</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Measured Throughput</div>
+                <div class="stat-val" id="statThroughput">10.85 RPS</div>
+                <div class="stat-sub">651 requests in 1.0 min</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Error Rate</div>
+                <div class="stat-val highlight-crimson" id="statErrorRate">5.37%</div>
+                <div class="stat-sub">35 timeouts / 651 reqs</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Selected Carbon</div>
+                <div class="stat-val" id="statSelectedCarbon">563.0</div>
+                <div class="stat-sub">gCO₂eq/kWh (PJM Grid)</div>
+              </div>
+            </div>
+
+            <div class="metadata-list">
+              <div class="metadata-row">
+                <span class="meta-key">Cluster Context <span id="clusterStatusBadge" style="font-size:0.65rem;"></span></span>
+                <span class="meta-val" id="metaClusterContext">aks-primary-eastus (Group_1_East)</span>
+              </div>
+              <div class="metadata-row">
+                <span class="meta-key">Primary Pods (benchmark ns)</span>
+                <span class="meta-val" id="metaPrimaryPodsCard">checking…</span>
+              </div>
+              <div class="metadata-row">
+                <span class="meta-key">Secondary Pods (benchmark ns)</span>
+                <span class="meta-val" id="metaSecondaryPodsCard">checking…</span>
+              </div>
+              <div class="metadata-row">
+                <span class="meta-key">VMSS Node</span>
+                <span class="meta-val" id="metaNodeName">aks-system-35513594-vmss000000</span>
+              </div>
+              <div class="metadata-row">
+                <span class="meta-key">Target Pod IP</span>
+                <span class="meta-val" id="metaPodIp">10.224.0.15</span>
+              </div>
+              <div class="metadata-row">
+                <span class="meta-key">Database State Reset</span>
+                <span class="meta-val" id="metaResetDuration">2m 42s (Reed98 seed=50)</span>
+              </div>
+              <div class="metadata-row">
+                <span class="meta-key">Cluster Status Checked</span>
+                <span class="meta-val" id="metaClusterTimestamp">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5-Component Trust Gate Card -->
+        <div class="col-6">
+          <div class="metric-card">
+            <div class="card-heading">
+              <h4>5-Component Trust Gate Verifier</h4>
+              <span class="card-badge">Threshold: 0.60</span>
+            </div>
+
+            <p style="font-size: 0.82rem; color: var(--c-text-secondary); margin-bottom: 12px;">
+              Autonomous proposals by Llama-3 must pass a fail-closed weighted verification before execution.
+            </p>
+
+            <div class="trust-components-grid">
+              <!-- Faithfulness -->
+              <div class="trust-item">
+                <div class="trust-label-row">
+                  <span class="trust-name">RAGAS Faithfulness <span class="trust-weight">(w: 0.20)</span></span>
+                  <span class="trust-score-val" id="valFaithfulness">0.95</span>
+                </div>
+                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barFaithfulness" style="width: 95%;"></div></div>
+              </div>
+
+              <!-- Context Precision -->
+              <div class="trust-item">
+                <div class="trust-label-row">
+                  <span class="trust-name">RAGAS Context Precision <span class="trust-weight">(w: 0.20)</span></span>
+                  <span class="trust-score-val" id="valPrecision">0.92</span>
+                </div>
+                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barPrecision" style="width: 92%;"></div></div>
+              </div>
+
+              <!-- NeMo Guardrails -->
+              <div class="trust-item">
+                <div class="trust-label-row">
+                  <span class="trust-name">NeMo Guardrails <span class="trust-weight">(w: 0.20)</span></span>
+                  <span class="trust-score-val" id="valGuardrails">1.00</span>
+                </div>
+                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barGuardrails" style="width: 100%;"></div></div>
+              </div>
+
+              <!-- Data Freshness -->
+              <div class="trust-item">
+                <div class="trust-label-row">
+                  <span class="trust-name">Data Freshness <span class="trust-weight">(w: 0.20)</span></span>
+                  <span class="trust-score-val" id="valFreshness">1.00</span>
+                </div>
+                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barFreshness" style="width: 100%;"></div></div>
+              </div>
+
+              <!-- Execution Feasibility -->
+              <div class="trust-item">
+                <div class="trust-label-row">
+                  <span class="trust-name">Execution Feasibility <span class="trust-weight">(w: 0.20)</span></span>
+                  <span class="trust-score-val" id="valFeasibility">1.00</span>
+                </div>
+                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barFeasibility" style="width: 100%;"></div></div>
+              </div>
+            </div>
+
+            <!-- Composite Score Panel -->
+            <div class="trust-gate-composite">
+              <span class="threshold-marker">WEIGHTED TRUST SCORE</span>
+              <div class="composite-score" id="trustCompositeScore">0.974</div>
+              <div id="trustGateDecision" style="font-family: var(--font-mono); font-size: 0.8rem;">
+                <span style="color: #a8c0dd;">● PROPOSAL ACCEPTED</span> (Score &ge; 0.60)
+              </div>
+            </div>
+
+            <!-- Fail-closed banner -->
+            <div id="trustGateAlertBanner" style="display: none; margin-top: 10px; padding: 10px; background: rgba(214, 40, 40, 0.2); border: 1px solid var(--c-alert-crimson); border-radius: var(--radius-sm); font-size: 0.78rem; font-family: var(--font-mono); color: #ff8585;"></div>
+
+            <!-- Adversary Simulator Sliders -->
+            <div class="simulator-controls">
+              <div style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--c-text-muted); margin-bottom: 8px; text-transform: uppercase;">Adversarial Hallucination Simulator:</div>
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span>Simulate Hallucination (Faithfulness):</span>
+                </div>
+                <input type="range" id="sliderFaithfulness" min="0.0" max="1.0" step="0.05" value="0.95">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span>Simulate Policy Breach (Guardrails):</span>
+                </div>
+                <input type="range" id="sliderGuardrails" min="0.0" max="1.0" step="0.05" value="1.0">
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button id="btnSimulateHallucination" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">Simulate Attack</button>
+                <button id="btnResetTrustScores" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">Reset Default</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 4-Policy Head-to-Head Comparison Matrix -->
+        <div class="col-12">
+          <div class="metric-card">
+            <div class="card-heading">
+              <h4>Four-Policy Comparative Study</h4>
+              <span class="card-badge">Summary Evidence</span>
+            </div>
+
+            <p style="font-size: 0.85rem; color: var(--c-text-secondary);">
+              Direct comparison of scheduling policies against identical frozen carbon intensity traces and DeathStarBench workloads.
+            </p>
+
+            <div class="policy-table-wrapper">
+              <table class="policy-table">
+                <thead>
+                  <tr>
+                    <th>Policy Mode</th>
+                    <th>Target Cluster</th>
+                    <th>Mean Carbon Intensity</th>
+                    <th>Carbon vs Static</th>
+                    <th>p95 Latency</th>
+                    <th>Fallback Rate</th>
+                    <th>SLO Status</th>
+                  </tr>
+                </thead>
+                <tbody id="policyTableBody">
+                  <!-- Injected by metrics-view.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 28-Microservice Dependency DAG -->
+        <div class="col-8">
+          <div class="metric-card">
+            <div class="card-heading">
+              <h4>DeathStarBench Social Network Topology (28 Microservices)</h4>
+              <span class="card-badge">Dependency Graph</span>
+            </div>
+            <div id="selectedNodeInfo" style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--c-text-secondary); margin-bottom: 10px;">
+              Hover any microservice node to inspect its architectural tier and inter-service dependencies.
+            </div>
+            <div class="dag-container">
+              <svg id="dagSvg"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Environmental Impact Counter & wrk2 Logs -->
+        <div class="col-4">
+          <div class="metric-card" style="margin-bottom: 24px;">
+            <div class="card-heading">
+              <h4>Environmental Savings Ticker</h4>
+              <span class="card-badge">Avoided Emissions</span>
+            </div>
+            <div style="text-align: center; padding: 16px 0;">
+              <div style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--c-text-muted); text-transform: uppercase;">Cumulative CO₂ Saved</div>
+              <div id="carbonSavedCounter" style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 700; color: #a8c0dd; margin: 6px 0;">1.42 kg CO₂</div>
+              <div style="font-size: 0.82rem; color: var(--c-text-secondary); font-family: var(--font-mono);">
+                Equivalent to <strong id="evMilesEquivalent" style="color: var(--c-crisp-text);">7.9 mi</strong> driven in an electric vehicle.
+              </div>
+            </div>
+          </div>
+
+          <div class="terminal-card">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+              </div>
+              <span>Live Cluster wrk2 Benchmark Stream</span>
+            </div>
+            <div class="terminal-body" id="terminalOutput">Loading live cluster logs...</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer-bar">
+    <div class="container">
+      <div>Carbon-Aware Cloud Optimization &copy; 2026 · Built on Azure Kubernetes Service (AKS) & Electricity Maps</div>
+      <div style="margin-top: 6px; font-size: 0.74rem; color: var(--c-slate-border);">
+        DeathStarBench Commit: <code>6ecb097</code> · Primary: <code>eastus</code> · Secondary: <code>westus2</code>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/traffic-animation.js"></script>
+  <script src="js/metrics-view.js"></script>
+  <script src="js/graph-topology.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
