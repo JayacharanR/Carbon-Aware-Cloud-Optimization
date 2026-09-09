@@ -329,7 +329,7 @@ Carbon-Aware-Cloud-Optimization/
 ## Project Contributors & Academic Guidance
 
 ### Core Contributors
-- Jayacharan R
+- [Jayacharan R](https://github.com/JayacharanR)
 - S Srtuan
 - M Nisith
 
