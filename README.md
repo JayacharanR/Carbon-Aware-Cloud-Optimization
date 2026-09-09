@@ -343,7 +343,7 @@ Carbon-Aware-Cloud-Optimization/
 This project is open-sourced under the **MIT License**.
 
 You are free to use, modify, redistribute, sublicense, and deploy this software in private, academic, or commercial environments, under the condition that:
-- **Mandatory Attribution:** The copyright notice and attribution to the creator **Jayacharan R** and contributors must be preserved in all copies or substantial portions of the Software.
+- **Mandatory Attribution:** The copyright notice and attribution to the creators **Jayacharan R, S Srtuan, M Nisith** must be preserved in all copies or substantial portions of the Software.
 
 See the complete [LICENSE](LICENSE) file for the full legal text.
 
