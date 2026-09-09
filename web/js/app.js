@@ -162,11 +162,45 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Initialize 28-Microservice Dependency DAG
   const dag = new GraphTopologyViewer('dagSvg');
 
-  // 4. Start Live Carbon Poller — this drives rerouting from real Electricity Maps data
-  const carbonPoller = new LiveCarbonPoller(anim, 60000);
-  carbonPoller.start();
+  // 4. Initialize AI Thinking Panel
+  const thinkingPanel = new AIThinkingPanel();
 
-  // 5. Wire Interactive Toolbar Controls (manual overrides)
+  // Expose global singletons for cross-component access
+  window.trafficAnim = anim;
+  window.thinkingPanel = thinkingPanel;
+  window.dagViewer = dag;
+
+  // 5. Start Live Carbon Poller — this drives rerouting from real Electricity Maps data
+  const carbonPoller = new LiveCarbonPoller(anim, 60000);
+  carbonPoller.thinkingPanel = thinkingPanel; // Give poller access so it can sync live values
+  carbonPoller.start();
+  window.carbonPoller = carbonPoller;
+
+  // 6. Wire HUD node click → AI Thinking Panel
+  const primaryHud   = document.getElementById('primaryClusterHud');
+  const secondaryHud = document.getElementById('secondaryClusterHud');
+
+  if (primaryHud) {
+    primaryHud.addEventListener('click', () => {
+      thinkingPanel.setLiveCarbon(anim.liveCarbon.eastus, anim.liveCarbon.westus2);
+      thinkingPanel.trigger('primary');
+      // Also trigger the routing animation
+      anim.setRoute('baseline');
+      setTimeout(() => anim.setRoute('optimized'), 3200);
+    });
+  }
+
+  if (secondaryHud) {
+    secondaryHud.addEventListener('click', () => {
+      thinkingPanel.setLiveCarbon(anim.liveCarbon.eastus, anim.liveCarbon.westus2);
+      thinkingPanel.trigger('secondary');
+      // Also trigger the routing animation
+      anim.setRoute('baseline');
+      setTimeout(() => anim.setRoute('optimized'), 3200);
+    });
+  }
+
+  // 7. Wire Interactive Toolbar Controls (manual overrides)
   const btnReroute = document.getElementById('btnTriggerReroute');
   const btnBaseline = document.getElementById('btnResetBaseline');
   const btnGridSurge = document.getElementById('btnSimulateGridSurge');

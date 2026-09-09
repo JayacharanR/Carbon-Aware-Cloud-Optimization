@@ -140,20 +140,69 @@ class GraphTopologyViewer {
       });
 
       g.addEventListener('mouseleave', () => {
-        circle.setAttribute('stroke-width', '2.5');
-        circle.setAttribute('r', isIngress ? '12' : '9');
+        if (!g.classList.contains('active-selected')) {
+          circle.setAttribute('stroke-width', '2.5');
+          circle.setAttribute('r', isIngress ? '12' : '9');
+        }
+      });
+
+      // Click node -> Simulate switch & open AI decision thinking panel
+      g.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Remove active state from all other nodes
+        this.svg.querySelectorAll('.dag-node').forEach(el => {
+          el.classList.remove('active-selected');
+          const c = el.querySelector('circle');
+          if (c) {
+            const isIng = el.textContent.includes('nginx-thrift');
+            c.setAttribute('stroke-width', '2.5');
+            c.setAttribute('r', isIng ? '12' : '9');
+          }
+        });
+
+        // Activate this node
+        g.classList.add('active-selected');
+        circle.setAttribute('stroke-width', '4.5');
+        circle.setAttribute('r', isIngress ? '15' : '12');
+
+        this.showNodeInfo(name, pos.tier, true);
+
+        // Sync live carbon values if available
+        if (window.thinkingPanel) {
+          if (window.trafficAnim && window.trafficAnim.liveCarbon) {
+            window.thinkingPanel.setLiveCarbon(
+              window.trafficAnim.liveCarbon.eastus,
+              window.trafficAnim.liveCarbon.westus2
+            );
+          }
+          // Open the AI Thinking Panel with the microservice context
+          window.thinkingPanel.trigger(name, { tier: pos.tier });
+        }
+
+        // Also trigger the traffic rerouting animation
+        if (window.trafficAnim) {
+          window.trafficAnim.setRoute('baseline');
+          setTimeout(() => {
+            if (window.trafficAnim) window.trafficAnim.setRoute('optimized');
+          }, 3200);
+        }
       });
 
       this.svg.appendChild(g);
     });
   }
 
-  showNodeInfo(name, tier) {
+  showNodeInfo(name, tier, isClicked = false) {
     const infoEl = document.getElementById('selectedNodeInfo');
     if (infoEl) {
-      infoEl.innerHTML = `Service: <strong>${name}</strong> | Tier: <strong>${tier}</strong> | Placement: <code>aks-primary-eastus</code> / <code>aks-secondary-westus2</code>`;
+      if (isClicked) {
+        infoEl.innerHTML = `⚡ Active Simulation: <strong style="color:#4caf82;">${name}</strong> | Tier: <strong>${tier}</strong> | Decision panel opened · Rerouting DeathStarBench traffic to clean region`;
+      } else {
+        infoEl.innerHTML = `Service: <strong>${name}</strong> | Tier: <strong>${tier}</strong> | Placement: <code>aks-primary-eastus</code> / <code>aks-secondary-westus2</code> (Click node to simulate decision)`;
+      }
     }
   }
 }
 
 window.GraphTopologyViewer = GraphTopologyViewer;
+

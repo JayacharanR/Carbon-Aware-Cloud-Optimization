@@ -31,3 +31,23 @@ artifacts/dsb-*.yaml
 infra/**/*.parameters.json
 infra/**/*.bicepparam
 *.tfstate
+
+# Scratch, test, and presentation scripts
+*pptx*.py
+scratch_*.py
+run_update_pptx.py
+*.pptx
+*.pptx.bak
+
+# Internal planning documents and slide decks
+PRESENTATION_EXPLANATION_NOTE.md
+AGENT_IMPLEMENTATION_PLAN.md
+PLAN.md
+PRD.md
+PPT-1.pdf
+*.pdf
+
+# Temporary logs and debug files
+*.log
+benchmark-logs/
+
