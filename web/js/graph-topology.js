@@ -106,6 +106,8 @@ class GraphTopologyViewer {
     Object.entries(nodePositions).forEach(([name, pos]) => {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('class', 'dag-node');
+      g.setAttribute('data-node-name', name);
+      g.id = 'dagNode_' + name.replace(/[^a-zA-Z0-9_-]/g, '_');
       g.style.cursor = 'pointer';
 
       // Background pill / circle

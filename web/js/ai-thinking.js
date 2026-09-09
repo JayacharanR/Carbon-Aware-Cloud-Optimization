@@ -216,7 +216,7 @@ class AIThinkingPanel {
       // ── Step 2: MILP Solver ────────────────────────────────────────────────
       {
         stepId: 'tStep2',
-        delay: 800,
+        delay: 500,
         html: `
 <div class="think-block step-milp">
   <div class="think-block-header">
@@ -258,7 +258,7 @@ prob.solve(PULP_CBC_CMD(msg=<span class="code-num">0</span>))
       // ── Step 3: LLM Reasoning ──────────────────────────────────────────────
       {
         stepId: 'tStep3',
-        delay: 1700,
+        delay: 700,
         html: `
 <div class="think-block step-llm">
   <div class="think-block-header">
@@ -311,14 +311,14 @@ JUSTIFICATION:
 CONFIDENCE: 98.4% (MILP objective aligned with LLM reasoning)
 </output>`;
 
-          this._typeText(streamEl, thoughtContent, 7);
+          this._typeText(streamEl, thoughtContent, 3);
         },
       },
 
       // ── Step 4: Trust Gate ─────────────────────────────────────────────────
       {
         stepId: 'tStep4',
-        delay: 4800,
+        delay: 3600,
         html: `
 <div class="think-block step-trust">
   <div class="think-block-header">
@@ -351,7 +351,7 @@ CONFIDENCE: 98.4% (MILP objective aligned with LLM reasoning)
       // ── Step 5: Dispatch ───────────────────────────────────────────────────
       {
         stepId: 'tStep5',
-        delay: 6200,
+        delay: 1200,
         html: `
 <div class="think-block step-dispatch">
   <div class="think-block-header">

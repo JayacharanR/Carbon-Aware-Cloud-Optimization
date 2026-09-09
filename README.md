@@ -8,7 +8,7 @@ Autonomous, carbon-intensity-aware microservice scheduling platform across multi
 
 ![Platform Demo Walkthrough](docs/assets/dashboard_demo.webp)
 
-*Figure 1: Live operator dashboard demonstrating multi-region telemetry ingestion, dynamic East US to West US 2 particle traffic shifting, empirical AKS workload verification, interactive 5-component Trust Gate gating, and adversarial fault injection.*
+*Figure 1: Live operator dashboard demonstrating multi-region telemetry ingestion, cluster region activation, real-time LLM chain-of-thought reasoning streams, 5-component Trust Gate gating, adversarial fault injection, and microservice DAG service dispatch.*
 
 Direct video link: [Download Full-Resolution Demonstration (MP4)](docs/assets/dashboard_demo.mp4)
 

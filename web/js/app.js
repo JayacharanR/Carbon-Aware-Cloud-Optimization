@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Expose global singletons for cross-component access
   window.trafficAnim = anim;
   window.thinkingPanel = thinkingPanel;
+  window.aiThinkingPanel = thinkingPanel;
   window.dagViewer = dag;
 
   // 5. Start Live Carbon Poller — this drives rerouting from real Electricity Maps data
