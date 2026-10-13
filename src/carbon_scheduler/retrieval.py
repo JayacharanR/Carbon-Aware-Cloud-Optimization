@@ -327,6 +327,40 @@ class ContextRetriever:
         self.store.upsert([record])
         return record
 
+    def latest_per_source(
+        self,
+        *,
+        source_types: Iterable[str],
+        as_of: datetime,
+        run_id: str | None = None,
+        search_depth: int = 64,
+    ) -> list[ContextRecord]:
+        """Newest record of each source type visible at ``as_of`` (v2 gate).
+
+        The lexical ``retrieve`` ranks by token overlap with the query.  The
+        snapshot JSON shares no token with the scheduler query (its keys such
+        as ``carbon_intensity_gco2eq_per_kwh`` tokenize as single words) while
+        the graph document matches ``nginx-thrift``, and an identical graph
+        document is re-added every cycle.  With limit 8 the result therefore
+        became graph documents only from cycle 10 onward (as_built).  This
+        method instead returns the decision's own snapshot and graph context.
+        """
+
+        selected: list[ContextRecord] = []
+        for source_type in source_types:
+            candidates = self.store.search(
+                RetrievalQuery(
+                    query_text=source_type,
+                    as_of=as_of,
+                    run_id=run_id,
+                    source_types=(source_type,),
+                    limit=search_depth,
+                )
+            )
+            if candidates:
+                selected.append(max(candidates, key=lambda record: (record.event_time, record.record_id)))
+        return selected
+
     def retrieve(
         self,
         *,
@@ -349,22 +383,25 @@ class ContextRetriever:
         )
 
 
+def render_retrieval_document(record: ContextRecord) -> str:
+    """One record with its evidence-ID header (what the v2 prompt shows the LLM)."""
+
+    return "\n".join(
+        (
+            f"[evidence_id={record.record_id}]",
+            f"source_type={record.source_type}",
+            f"event_time={record.event_time.isoformat()}",
+            f"region={record.region or ''}",
+            record.content,
+        )
+    )
+
+
 def render_retrieval_context(records: Iterable[ContextRecord]) -> str:
     """Render records deterministically for the LLM prompt and run artifact."""
 
     ordered = sorted(records, key=lambda record: (record.event_time, record.record_id))
-    return "\n\n".join(
-        "\n".join(
-            (
-                f"[evidence_id={record.record_id}]",
-                f"source_type={record.source_type}",
-                f"event_time={record.event_time.isoformat()}",
-                f"region={record.region or ''}",
-                record.content,
-            )
-        )
-        for record in ordered
-    )
+    return "\n\n".join(render_retrieval_document(record) for record in ordered)
 
 
 def _tokenize(value: str) -> list[str]:

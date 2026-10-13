@@ -70,11 +70,32 @@ def capture_trace(
     snapshots: list[dict[str, Any]] = []
     for index in range(cycles):
         snapshot = client.fetch_snapshot(regions, decision_time=datetime.now(UTC))
+        # Each region record carries ``reported_zone``: the zone the provider
+        # says it answered for (Electricity Maps ``zone`` field), next to the
+        # requested ``provider_region``.  The v2/v2.1 provenance rail compares it
+        # with the configured zone.
         snapshots.append(snapshot.model_dump(mode="json"))
+        zones = ", ".join(
+            f"{name}: requested {item.provider_region}, returned {item.reported_zone or 'none'}"
+            for name, item in sorted(snapshot.regions.items())
+        )
         print(
             f"captured cycle {index + 1}/{cycles}: snapshot={snapshot.snapshot_id} "
-            f"sources={','.join(sorted({item.source.value for item in snapshot.regions.values()}))}"
+            f"sources={','.join(sorted({item.source.value for item in snapshot.regions.values()}))} "
+            f"zones=[{zones}]"
         )
+        mismatched = [
+            name
+            for name, item in sorted(snapshot.regions.items())
+            if item.reported_zone is not None and item.reported_zone != item.provider_region
+        ]
+        if mismatched:
+            print(
+                "warning: provider returned a zone other than the requested one for "
+                + ", ".join(mismatched)
+                + " (the v2/v2.1 zone-provenance rail will reject this snapshot)",
+                file=sys.stderr,
+            )
         if index + 1 < cycles and interval_seconds:
             time.sleep(interval_seconds)
 

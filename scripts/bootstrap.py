@@ -268,6 +268,7 @@ def _render_infrastructure(env: Mapping[str, str], *, force: bool) -> None:
         "",
         f"param resourceGroupName = {_bicep_string(_value(env, 'AZURE_RESOURCE_GROUP') or '')}",
         f"param primaryLocation = {_bicep_string(_value(env, 'AZURE_PRIMARY_REGION') or '')}",
+        f"param resourceGroupLocation = {_bicep_string(_value(env, 'AZURE_RESOURCE_GROUP_LOCATION') or _value(env, 'AZURE_PRIMARY_REGION') or '')}",
         f"param secondaryLocation = {_bicep_string(_value(env, 'AZURE_SECONDARY_REGION') or '')}",
         f"param primaryClusterName = {_bicep_string(_value(env, 'AZURE_PRIMARY_CLUSTER') or '')}",
         f"param secondaryClusterName = {_bicep_string(_value(env, 'AZURE_SECONDARY_CLUSTER') or '')}",
@@ -358,6 +359,18 @@ def _render_experiment(env: Mapping[str, str], *, force: bool) -> None:
                 "data_freshness": _number(env, "TRUST_WEIGHT_DATA_FRESHNESS"),
                 "execution_feasibility": _number(env, "TRUST_WEIGHT_EXECUTION_FEASIBILITY"),
             },
+        },
+        # Trust-gate profile: v2.1 (default: v2 + model-feasibility rail), v2,
+        # or as_built (original behaviour, kept as the evaluation baseline).
+        "gate": {
+            "profile": _value(env, "TRUST_GATE_PROFILE", default="v2.1"),
+            "max_data_age_seconds": _integer(env, "TRUST_MAX_DATA_AGE_SECONDS", default=7200),
+            "carbon_regret_tolerance": _number(env, "TRUST_CARBON_REGRET_TOLERANCE", default=0.05),
+            "llm_num_ctx": _integer(env, "OLLAMA_NUM_CTX", default=8192),
+            "ragas_max_tokens": _integer(env, "RAGAS_MAX_TOKENS", default=4096),
+            "last_known_good_max_age_seconds": _integer(
+                env, "TRUST_LAST_KNOWN_GOOD_MAX_AGE_SECONDS", default=21600
+            ),
         },
         "milp": {
             "slot_minutes": _integer(env, "MILP_SLOT_MINUTES", default=5),

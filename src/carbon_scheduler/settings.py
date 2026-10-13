@@ -11,7 +11,7 @@ from typing import Any
 import yaml
 from pydantic import Field, ValidationError, field_validator, model_validator
 
-from .schemas import ContractModel, DecisionMode, TrustPolicy
+from .schemas import ContractModel, DecisionMode, GateProfile, TrustPolicy
 
 
 class AzureSettings(ContractModel):
@@ -27,6 +27,11 @@ class CarbonSettings(ContractModel):
     provider: str = Field(min_length=1)
     primary_provider_region: str = Field(min_length=1)
     secondary_provider_region: str = Field(min_length=1)
+    # Grid zone each region's data must come from, checked against the zone
+    # the provider returns. Required in substance when provider is "azure"
+    # (the request names an Azure region, not a zone); optional otherwise.
+    primary_expected_zone: str | None = None
+    secondary_expected_zone: str | None = None
     forecast_horizon_hours: int = Field(gt=0)
     cache_directory: str = Field(min_length=1)
     cache_max_age_seconds: int = Field(gt=0)
@@ -34,9 +39,11 @@ class CarbonSettings(ContractModel):
 
     @field_validator("provider")
     @classmethod
-    def provider_is_azure(cls, value: str) -> str:
-        if value.lower() != "azure":
-            raise ValueError("carbon.provider must be 'azure' for provider-region queries")
+    def provider_is_supported(cls, value: str) -> str:
+        # "azure": *_provider_region are Azure regions resolved by Electricity
+        # Maps. "zone": *_provider_region are Electricity Maps zone ids.
+        if value.lower() not in {"azure", "zone"}:
+            raise ValueError("carbon.provider must be 'azure' or 'zone'")
         return value.lower()
 
 
@@ -105,6 +112,33 @@ class OllamaSettings(ContractModel):
     retry_count: int = Field(ge=0)
 
 
+class GateSettings(ContractModel):
+    """Trust-gate profile and the v2 gate's parameters.
+
+    The whole section is optional so configurations rendered before the v2
+    gate existed still load; they then run the corrected gate (``v2``).  Set
+    ``profile: as_built`` to reproduce the original behaviour exactly.
+    """
+
+    profile: GateProfile = GateProfile.V2_1
+    # v2 data-age rail: decision_time - observation timestamp, per region.
+    max_data_age_seconds: int = Field(default=7200, gt=0)
+    # v2 carbon-regret rail: accepted proposal CI <= (1 + tolerance) * MILP optimum.
+    carbon_regret_tolerance: float = Field(default=0.05, ge=0)
+    # v2 LLM context window sent to Ollama (llama3:8b supports 8192).
+    llm_num_ctx: int = Field(default=8192, gt=0)
+    # v2 RAGAS completion budget (the library default of 1024 truncates).
+    ragas_max_tokens: int = Field(default=4096, gt=0)
+    # v2 data-integrity handling: when data_age or zone_provenance fails, the
+    # MILP runs on the most recent snapshot that passed both rails if its data
+    # is at most this old; otherwise the cycle holds (no new session).
+    last_known_good_max_age_seconds: int = Field(default=21600, gt=0)
+    # Model-feasibility rail: an admitted proposal must be feasible under the
+    # MILP's own model (catalog P95 <= SLO, availability, window).  None =
+    # profile default (on for v2.1, off for v2); true/false override.
+    model_feasibility_rail: bool | None = None
+
+
 class ExperimentSettings(ContractModel):
     modes: list[str] = Field(min_length=1)
     static_reference_region: str = Field(min_length=1)
@@ -139,6 +173,7 @@ class ExperimentConfig(ContractModel):
     milp: MilpSettings
     ollama: OllamaSettings
     experiments: ExperimentSettings
+    gate: GateSettings = Field(default_factory=GateSettings)
 
     @model_validator(mode="after")
     def enforce_two_region_scope(self) -> "ExperimentConfig":

@@ -4,6 +4,8 @@ using './main.bicep'
 
 param resourceGroupName = 'REPLACE_ME_RESOURCE_GROUP'
 param primaryLocation = 'REPLACE_ME_PRIMARY_AZURE_REGION'
+// Only differs from primaryLocation when the resource group already exists elsewhere.
+param resourceGroupLocation = 'REPLACE_ME_PRIMARY_AZURE_REGION'
 param secondaryLocation = 'REPLACE_ME_SECONDARY_AZURE_REGION'
 param primaryClusterName = 'REPLACE_ME_PRIMARY_CLUSTER'
 param secondaryClusterName = 'REPLACE_ME_SECONDARY_CLUSTER'

@@ -95,10 +95,13 @@ are filled. Then create the budget with `pwsh -File scripts/deploy-budget.ps1 -A
 ## 4. Electricity Maps
 
 Create an API token in the Electricity Maps account that has access to the
-selected Azure provider regions. Put the token in `ELECTRICITY_MAPS_API_KEY`.
-Use the provider-region identifiers shown by that account/API, not arbitrary
-Azure geography names, in `CARBON_PRIMARY_PROVIDER_REGION` and
-`CARBON_SECONDARY_PROVIDER_REGION`. The two identifiers must be different.
+selected grid zones. Put the token in `ELECTRICITY_MAPS_API_KEY`.
+Set `CARBON_PROVIDER=zone` and put Electricity Maps zone identifiers in
+`CARBON_PRIMARY_PROVIDER_REGION` and `CARBON_SECONDARY_PROVIDER_REGION`
+(`US-MIDA-PJM` for eastus/eastus2, `US-NW-BPAT` for westus2). The two
+identifiers must be different. `CARBON_PROVIDER=azure` (Azure region names
+resolved by Electricity Maps) can resolve every region to the caller's own grid,
+e.g. `IN-SO` from India, giving identical series for both regions.
 
 The first live capture verifies the mapping:
 

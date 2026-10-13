@@ -84,7 +84,7 @@ class LiveCarbonPoller {
       const saving = (eastInt && westInt) ? `${Math.round(eastInt - westInt)} gCO₂/kWh saved` : '';
       banner.innerHTML = `<span class="live-indicator">● LIVE DECISION</span> Electricity Maps data: PJM=${Math.round(eastInt || 0)} vs BPA=${Math.round(westInt || 0)} gCO₂/kWh. Scheduler routing to <strong>aks-secondary-westus2</strong>${saving ? ` — ${saving}` : ''}.`;
     } else {
-      banner.innerHTML = `<span class="live-indicator crimson">● MONITORING</span> Carbon parity detected. Holding workload on <strong>aks-primary-eastus</strong>. PJM=${Math.round(eastInt || 0)} gCO₂/kWh.`;
+      banner.innerHTML = `<span class="live-indicator crimson">● MONITORING</span> Carbon parity detected. Holding workload on <strong>aks-primary-eastus2</strong>. PJM=${Math.round(eastInt || 0)} gCO₂/kWh.`;
     }
   }
 
@@ -102,7 +102,7 @@ class LiveCarbonPoller {
     // Update decided region indicator
     const decisionEl = document.getElementById('liveDecisionRegion');
     if (decisionEl && data.decided_region) {
-      decisionEl.textContent = data.decided_region === 'westus2' ? 'westus2 ✓' : 'eastus (baseline)';
+      decisionEl.textContent = data.decided_region === 'westus2' ? 'westus2 ✓' : 'eastus2 (baseline)';
       decisionEl.style.color = data.decided_region === 'westus2' ? '#a8c0dd' : '#ff6b6b';
     }
     // Update carbon reduction badge
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (banner) {
         const eastInt = anim.liveCarbon.eastus;
         const spiked = eastInt ? Math.round(eastInt * 1.22) : 685;
-        banner.innerHTML = `<span class="live-indicator crimson">⚡ GRID SURGE SIMULATED!</span> PJM East US spiked to <strong>${spiked} gCO₂eq/kWh</strong>. Trust Gate initiating automated cross-region migration…`;
+        banner.innerHTML = `<span class="live-indicator crimson">⚡ GRID SURGE SIMULATED!</span> PJM East US 2 spiked to <strong>${spiked} gCO₂eq/kWh</strong>. Trust Gate initiating automated cross-region migration…`;
       }
       setTimeout(() => {
         anim.setRoute('optimized');

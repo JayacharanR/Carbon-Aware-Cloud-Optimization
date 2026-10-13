@@ -36,6 +36,26 @@ class DecisionMode(str, Enum):
     STATIC_REFERENCE = "static_reference"
 
 
+class GateProfile(str, Enum):
+    """Trust-gate implementation selector.
+
+    ``as_built`` reproduces the original gate exactly (kept as the paper
+    baseline); ``v2`` is the corrected gate (see ``trust.py`` / ``workflow.py``);
+    ``v2.1`` is ``v2`` with the model-feasibility rail on (the default).
+    """
+
+    AS_BUILT = "as_built"
+    V2 = "v2"
+    # v2 + model-feasibility rail on by default (review round 1, M4.1)
+    V2_1 = "v2.1"
+
+    @property
+    def is_v2_family(self) -> bool:
+        """v2 and v2.1 share the corrected gate (compact prompt, data rails, v2 score)."""
+
+        return self is not GateProfile.AS_BUILT
+
+
 class CarbonDataSource(str, Enum):
     LIVE = "live"
     CACHE = "cache"
@@ -56,6 +76,11 @@ class CarbonPoint(ContractModel):
 
 class CarbonRegionData(ContractModel):
     provider_region: str = Field(min_length=1)
+    # Zone the provider actually returned (Electricity Maps ``zone`` field), as
+    # opposed to ``provider_region``, which is what the client requested.
+    # Replay traces built from a source file carry the source's own zone label.
+    # None = unknown (the provenance rail then relies on its other tests).
+    reported_zone: str | None = None
     source: CarbonDataSource
     current: CarbonPoint
     forecast: list[CarbonPoint] = Field(default_factory=list)
@@ -195,6 +220,18 @@ class TrustReport(ContractModel):
     threshold: float = Field(ge=0, le=1)
     passed: bool
     failure_reason: str | None = None
+    # Recorded by the workflow; the v2-only values stay None under as_built.
+    gate_profile: GateProfile | None = None
+    data_age_seconds: float | None = None
+    proposal_carbon_intensity_gco2eq_per_kwh: float | None = Field(default=None, ge=0)
+    reference_carbon_intensity_gco2eq_per_kwh: float | None = Field(default=None, ge=0)
+    # Relative carbon regret of the proposal vs the MILP optimum on the same
+    # frozen inputs: (proposal - optimum) / optimum.
+    carbon_regret: float | None = None
+    # v2.1: data age against the scheduler clock (wall clock when executing
+    # for real; trace time in replay).  ``data_age_seconds`` stays the age
+    # against the snapshot's own decision_time.
+    clock_data_age_seconds: float | None = None
 
 
 class ExecutionReceipt(ContractModel):
@@ -212,6 +249,17 @@ class ExecutionReceipt(ContractModel):
     actual_error_rate: float | None = Field(default=None, ge=0, le=1)
     slo_passed: bool | None = None
     execution_failure_reason: str | None = None
+    gate_profile: GateProfile | None = None
+    # llm | milp | milp_last_known_good | data_integrity_hold | static_reference
+    decision_source: str | None = None
+    # v2: set when a data rail failed (operator attention needed): on a
+    # last-known-good fallback (alert_level "warning") and on a
+    # data-integrity hold (alert_level "critical").
+    alert: bool = False
+    alert_level: Literal["warning", "critical"] | None = None
+    # scheduler-clock time at which the action was dispatched (None in
+    # dry-run replay without a clock)
+    dispatched_at: datetime | None = None
 
     _started_at_is_timezone_aware = field_validator("started_at")(_require_timezone)
     _completed_at_is_timezone_aware = field_validator("completed_at")(_require_timezone)

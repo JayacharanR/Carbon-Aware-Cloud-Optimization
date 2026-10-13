@@ -11,8 +11,12 @@ data:
     receivers:
       otlp:
         protocols:
-          grpc: {}
-          http: {}
+          # Recent collector releases bind to localhost by default, which
+          # hides the receivers from other Pods and the readiness probe.
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
     processors:
       batch: {}
     exporters:

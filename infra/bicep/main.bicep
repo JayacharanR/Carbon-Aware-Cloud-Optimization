@@ -9,6 +9,9 @@ param resourceGroupName string
 @description('Azure location for the first independent benchmark cluster.')
 param primaryLocation string
 
+@description('Location metadata for the resource group. Azure cannot move an existing group, so set this when the group was created in a different region than the primary cluster.')
+param resourceGroupLocation string = primaryLocation
+
 @description('Azure location for the second independent benchmark cluster.')
 param secondaryLocation string
 
@@ -55,7 +58,7 @@ param tags object = {
 
 resource researchResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
-  location: primaryLocation
+  location: resourceGroupLocation
   tags: tags
 }
 

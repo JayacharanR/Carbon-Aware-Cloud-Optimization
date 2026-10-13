@@ -14,3 +14,22 @@ global:
       memory: 128Mi
   replicas: 1
   imagePullPolicy: IfNotPresent
+
+# MongoDB 4.4 sizes its WiredTiger cache to at least 256MB, so the global
+# 128Mi limit gets it OOM-killed while init_social_graph.py loads follows,
+# leaving the two regional fixtures with different edge counts. Requests stay
+# at the global value so scheduling on the two-node pools is unchanged.
+media-mongodb: &mongodbResources
+  container:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+post-storage-mongodb: *mongodbResources
+social-graph-mongodb: *mongodbResources
+url-shorten-mongodb: *mongodbResources
+user-mongodb: *mongodbResources
+user-timeline-mongodb: *mongodbResources

@@ -20,6 +20,23 @@ import yaml
 
 from .schemas import ActionProposal, DecisionMode, ExecutionReceipt
 
+# (connect, read) timeout in seconds for every Kubernetes API call.  A
+# connection that dies silently (host suspend, dropped idle connection) would
+# otherwise block a call until TCP gives up, which can take many minutes.
+API_TIMEOUT = (10, 30)
+# Attempts for one-shot calls (create, log reads) that hit a transport error.
+API_ATTEMPTS = 3
+
+
+def _transport_errors() -> tuple[type[BaseException], ...]:
+    """Errors that mean "the request did not get an answer", worth retrying."""
+
+    try:
+        from urllib3.exceptions import HTTPError as Urllib3Error
+    except ImportError:  # pragma: no cover - urllib3 ships with kubernetes
+        return (OSError, TimeoutError)
+    return (Urllib3Error, OSError, TimeoutError)
+
 
 class ExecutionError(RuntimeError):
     """A requested benchmark session could not be prepared or completed."""
@@ -228,6 +245,12 @@ class KubernetesBenchmarkExecutor:
                     benchmark_logs=logs,
                 )
             )
+            script_error = benchmark_script_error(logs)
+            if script_error:
+                # wrk2 falls back to plain GET / when the workload script does
+                # not load and still reports a latency distribution; that is a
+                # measurement of the wrong request, not of the workload.
+                raise ExecutionError(f"benchmark script failed to load: {script_error}")
             p95_latency, error_rate = parse_benchmark_output(logs)
             completed_at = datetime.now(UTC)
             return ExecutionReceipt(
@@ -308,6 +331,7 @@ class KubernetesBenchmarkExecutor:
                 endpoints = core_api.read_namespaced_endpoints(
                     name=target.frontend_service,
                     namespace=target.namespace,
+                    _request_timeout=API_TIMEOUT,
                 )
                 subsets = getattr(endpoints, "subsets", None) or []
                 if any(getattr(subset, "addresses", None) for subset in subsets):
@@ -317,35 +341,54 @@ class KubernetesBenchmarkExecutor:
                     raise ExecutionError(
                         f"unable to inspect frontend service {target.frontend_service}: {error}"
                     ) from error
+            except _transport_errors():
+                pass  # no answer this time; poll again until the deadline
             if time.monotonic() >= deadline:
                 raise ExecutionError(
                     f"frontend service {target.frontend_service} has no ready endpoints before timeout"
                 )
             time.sleep(self.poll_interval_seconds)
 
-    @staticmethod
     def _ensure_job(
+        self,
         batch_api: Any,
         namespace: str,
         name: str,
         body: dict[str, Any],
         api_exception: type[Exception],
     ) -> None:
-        try:
-            batch_api.read_namespaced_job(name=name, namespace=namespace)
-            return
-        except api_exception as error:
-            if getattr(error, "status", None) != 404:
-                raise ExecutionError(f"unable to inspect Job {name}: {error}") from error
-        try:
-            batch_api.create_namespaced_job(namespace=namespace, body=body)
-        except api_exception as error:
-            raise ExecutionError(f"unable to create Job {name}: {error}") from error
+        last_error: BaseException | None = None
+        for attempt in range(API_ATTEMPTS):
+            if attempt:
+                time.sleep(self.poll_interval_seconds)
+            try:
+                batch_api.read_namespaced_job(name=name, namespace=namespace, _request_timeout=API_TIMEOUT)
+                return
+            except api_exception as error:
+                if getattr(error, "status", None) != 404:
+                    raise ExecutionError(f"unable to inspect Job {name}: {error}") from error
+            except _transport_errors() as error:
+                last_error = error
+                continue
+            try:
+                batch_api.create_namespaced_job(namespace=namespace, body=body, _request_timeout=API_TIMEOUT)
+                return
+            except api_exception as error:
+                # A create whose reply was lost may already have succeeded.
+                if getattr(error, "status", None) == 409:
+                    return
+                raise ExecutionError(f"unable to create Job {name}: {error}") from error
+            except _transport_errors() as error:
+                last_error = error  # re-read first: the create may have landed
+        raise ExecutionError(f"unable to create Job {name}: {last_error}")
 
     def _wait_for_job(self, batch_api: Any, namespace: str, name: str) -> None:
         deadline = time.monotonic() + self.job_timeout_seconds
         while True:
-            job = batch_api.read_namespaced_job(name=name, namespace=namespace)
+            try:
+                job = batch_api.read_namespaced_job(name=name, namespace=namespace, _request_timeout=API_TIMEOUT)
+            except _transport_errors():
+                job = None  # no answer this time; poll again until the deadline
             status = getattr(job, "status", None)
             if getattr(status, "succeeded", 0):
                 return
@@ -355,11 +398,13 @@ class KubernetesBenchmarkExecutor:
                 raise ExecutionError(f"Job {name} did not finish before timeout")
             time.sleep(self.poll_interval_seconds)
 
-    @staticmethod
-    def _job_logs(core_api: Any, namespace: str, job_name: str) -> str:
-        pods = core_api.list_namespaced_pod(
-            namespace=namespace,
-            label_selector=f"job-name={job_name}",
+    def _job_logs(self, core_api: Any, namespace: str, job_name: str) -> str:
+        pods = self._with_retries(
+            lambda: core_api.list_namespaced_pod(
+                namespace=namespace,
+                label_selector=f"job-name={job_name}",
+                _request_timeout=API_TIMEOUT,
+            )
         ).items
         fragments: list[str] = []
         for pod in pods:
@@ -367,10 +412,27 @@ class KubernetesBenchmarkExecutor:
             if not pod_name:
                 continue
             try:
-                fragments.append(core_api.read_namespaced_pod_log(name=pod_name, namespace=namespace))
+                fragments.append(
+                    self._with_retries(
+                        lambda: core_api.read_namespaced_pod_log(
+                            name=pod_name, namespace=namespace, _request_timeout=API_TIMEOUT
+                        )
+                    )
+                )
             except Exception as error:  # logs are diagnostic, not a reason to hide completion
                 fragments.append(f"[unable to read logs for {pod_name}: {error}]")
         return "\n".join(fragments)
+
+    def _with_retries(self, call: Any) -> Any:
+        """Retry a one-shot read that got no answer (transport error only)."""
+
+        for attempt in range(API_ATTEMPTS):
+            try:
+                return call()
+            except _transport_errors():
+                if attempt + 1 == API_ATTEMPTS:
+                    raise
+                time.sleep(self.poll_interval_seconds)
 
     def _save_logs(
         self,
@@ -463,7 +525,21 @@ def parse_benchmark_output(output: str) -> tuple[float | None, float | None]:
         if non_success is not None or socket_errors_match is not None:
             error_count = (non_success or 0) + socket_errors
             error_rate = error_count / total_requests
+        elif re.search(r"Requests/sec:\s*[0-9.]+", output):
+            # wrk prints the socket-error and non-2xx lines only when they are
+            # nonzero, so a complete summary without them means no errors.
+            error_rate = 0.0
     return p95_latency, error_rate
+
+
+def benchmark_script_error(output: str) -> str | None:
+    """Return the first Lua load/run error wrk2 printed for its script, if any."""
+
+    match = re.search(r"^\S+\.lua: \S+\.lua:\d+: .*$", output, flags=re.MULTILINE)
+    if match:
+        return match.group(0).strip()
+    match = re.search(r"^PANIC: unprotected error in call to Lua API.*$", output, flags=re.MULTILINE)
+    return match.group(0).strip() if match else None
 
 
 def _find_latency_ms(output: str, pattern: str) -> float | None:

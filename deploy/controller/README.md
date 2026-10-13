@@ -24,7 +24,8 @@ Before applying, create the non-versioned Kubernetes objects required by the dep
 
 The base deployment is intentionally dormant: `EXPERIMENT_MODE`, replay-trace,
 graph, latency-catalog, and target-config paths are empty until a concrete run
-is reviewed. To configure one replay run, supply all five input paths to the platform script;
+is reviewed, and the platform script scales the controller to zero replicas so
+it does not crash-loop on the missing mode. To configure one replay run, supply all five input paths to the platform script;
 it stores them in the `scheduler-run-inputs` ConfigMap and patches the runtime
 paths to `/etc/carbon-scheduler/inputs/...`:
 

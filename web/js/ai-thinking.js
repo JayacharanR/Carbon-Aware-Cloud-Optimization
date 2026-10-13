@@ -8,7 +8,7 @@
  *   5. Final Workload Dispatch (kubectl switch & wrk2 benchmark trigger)
  *
  * Triggered by:
- *   - Clicking cluster HUD nodes (aks-primary-eastus / aks-secondary-westus2)
+ *   - Clicking cluster HUD nodes (aks-primary-eastus2 / aks-secondary-westus2)
  *   - Clicking ANY microservice node in the DeathStarBench Social Network SVG DAG
  */
 
@@ -41,8 +41,8 @@ class AIThinkingPanel {
     const east = this._liveCarbon.eastus;
     const west = this._liveCarbon.westus2;
     const reduction = east > 0 ? (((east - west) / east) * 100).toFixed(1) : '—';
-    const decidedRegion = west < east ? 'westus2' : 'eastus';
-    const decidedCluster = decidedRegion === 'westus2' ? 'aks-secondary-westus2' : 'aks-primary-eastus';
+    const decidedRegion = west < east ? 'westus2' : 'eastus2';
+    const decidedCluster = decidedRegion === 'westus2' ? 'aks-secondary-westus2' : 'aks-primary-eastus2';
     const decidedGrid = decidedRegion === 'westus2' ? 'US-NW-BPAT (BPA Hydro — Pacific NW)' : 'US-MIDA-PJM (PJM — Fossil Heavy)';
 
     const now = new Date().toISOString();
@@ -156,7 +156,7 @@ class AIThinkingPanel {
     let tierName = meta?.tier || 'Service Layer';
 
     if (triggerSource === 'primary') {
-      triggerLabel = 'Cluster HUD: aks-primary-eastus';
+      triggerLabel = 'Cluster HUD: aks-primary-eastus2';
       workloadName = 'DeathStarBench Ingress Gateway (nginx-thrift)';
       tierName = 'Ingress Gateway';
     } else if (triggerSource === 'secondary') {
@@ -189,12 +189,12 @@ class AIThinkingPanel {
       <div class="think-kv"><span class="kv-key">Architectural Tier</span><span class="kv-val mono">${tierName}</span></div>
       <div class="think-kv"><span class="kv-key">Trigger Origin</span><span class="kv-val mono">${triggerLabel}</span></div>
       <div class="think-kv"><span class="kv-key">Evaluation Timestamp</span><span class="kv-val mono">${now.replace('T', ' ').substring(0, 19)} UTC</span></div>
-      <div class="think-kv"><span class="kv-key">Primary Zone (eastus)</span><span class="kv-val mono">US-MIDA-PJM (PJM Interconnection)</span></div>
+      <div class="think-kv"><span class="kv-key">Primary Zone (eastus2)</span><span class="kv-val mono">US-MIDA-PJM (PJM Interconnection)</span></div>
       <div class="think-kv"><span class="kv-key">Secondary Zone (westus2)</span><span class="kv-val mono">US-NW-BPAT (BPA Hydro)</span></div>
     </div>
     <div class="think-intensity-bars">
       <div class="think-intensity-row">
-        <span class="intensity-label">eastus</span>
+        <span class="intensity-label">eastus2</span>
         <div class="intensity-bar-bg">
           <div class="intensity-bar-fill high" style="width:${Math.min(100, Math.max(10, (east / 6)))}%"></div>
         </div>
@@ -208,7 +208,7 @@ class AIThinkingPanel {
         <span class="intensity-val clean">${west} gCO₂/kWh</span>
       </div>
     </div>
-    <div class="think-conclusion green">✓ Live carbon delta verified: eastus is <strong>${reduction}% dirtier</strong> than westus2. Optimization threshold (&gt;20%) satisfied.</div>
+    <div class="think-conclusion green">✓ Live carbon delta verified: eastus2 is <strong>${reduction}% dirtier</strong> than westus2. Optimization threshold (&gt;20%) satisfied.</div>
   </div>
 </div>`,
       },
@@ -228,7 +228,7 @@ class AIThinkingPanel {
     <div class="think-code-block">
 <span class="code-comment"># Objective: Minimise Σ carbon_intensity[r] × x[r] for ${workloadName}</span>
 <span class="code-kw">prob</span> = LpProblem(<span class="code-str">"carbon_dispatch"</span>, LpMinimize)
-<span class="code-kw">x_east</span>  = LpVariable(<span class="code-str">"x_eastus"</span>,  0, 1, cat=<span class="code-str">'Binary'</span>)
+<span class="code-kw">x_east</span>  = LpVariable(<span class="code-str">"x_eastus2"</span>,  0, 1, cat=<span class="code-str">'Binary'</span>)
 <span class="code-kw">x_west</span>  = LpVariable(<span class="code-str">"x_westus2"</span>, 0, 1, cat=<span class="code-str">'Binary'</span>)
 
 <span class="code-comment"># Carbon objective function:</span>
@@ -241,7 +241,7 @@ prob += <span class="code-num">0.33</span> + <span class="code-num">20.4</span>*
 prob.solve(PULP_CBC_CMD(msg=<span class="code-num">0</span>))
 
 <span class="code-comment"># Solver output:</span>
-<span class="code-kw">x_eastus</span>  = <span class="code-num">${decidedRegion === 'eastus' ? 1 : 0}</span>
+<span class="code-kw">x_eastus2</span>  = <span class="code-num">${decidedRegion === 'eastus2' ? 1 : 0}</span>
 <span class="code-kw">x_westus2</span> = <span class="code-num">${decidedRegion === 'westus2' ? 1 : 0}</span>
 <span class="code-green">status = "Optimal" (Solver solved in 4.2ms)</span></div>
     <div class="think-kv-grid mt8">
@@ -269,7 +269,7 @@ prob.solve(PULP_CBC_CMD(msg=<span class="code-num">0</span>))
   <div class="think-block-body">
     <div class="think-llm-prompt">
       <div class="llm-prompt-label">SYSTEM PROMPT (RAG-Augmented)</div>
-      <div class="llm-prompt-text">You are a carbon-aware cloud scheduler with autonomous actuation rights. Evaluate whether workload "<strong>${workloadName}</strong>" should migrate from eastus to westus2 given live carbon telemetry (${east} vs ${west} gCO₂/kWh) and DeathStarBench SLO constraints.</div>
+      <div class="llm-prompt-text">You are a carbon-aware cloud scheduler with autonomous actuation rights. Evaluate whether workload "<strong>${workloadName}</strong>" should migrate from eastus2 to westus2 given live carbon telemetry (${east} vs ${west} gCO₂/kWh) and DeathStarBench SLO constraints.</div>
     </div>
     <div class="think-llm-stream" id="llmStream">
       <div class="llm-thinking-dots"><span></span><span></span><span></span></div>
@@ -283,7 +283,7 @@ prob.solve(PULP_CBC_CMD(msg=<span class="code-num">0</span>))
           const thoughtContent = `<thinking>
 Analyzing workload: ${workloadName} [Tier: ${tierName}].
 1. Current Grid State:
-   - Primary cluster (eastus · US-MIDA-PJM): ${east} gCO₂eq/kWh (coal/gas baseload).
+   - Primary cluster (eastus2 · US-MIDA-PJM): ${east} gCO₂eq/kWh (coal/gas baseload).
    - Secondary cluster (westus2 · US-NW-BPAT): ${west} gCO₂eq/kWh (hydro/wind baseload).
    - Carbon difference: ${east - west} gCO₂/kWh (${reduction}% reduction).
 

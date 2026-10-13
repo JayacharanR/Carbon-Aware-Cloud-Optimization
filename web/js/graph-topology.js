@@ -200,7 +200,7 @@ class GraphTopologyViewer {
       if (isClicked) {
         infoEl.innerHTML = `⚡ Active Simulation: <strong style="color:#4caf82;">${name}</strong> | Tier: <strong>${tier}</strong> | Decision panel opened · Rerouting DeathStarBench traffic to clean region`;
       } else {
-        infoEl.innerHTML = `Service: <strong>${name}</strong> | Tier: <strong>${tier}</strong> | Placement: <code>aks-primary-eastus</code> / <code>aks-secondary-westus2</code> (Click node to simulate decision)`;
+        infoEl.innerHTML = `Service: <strong>${name}</strong> | Tier: <strong>${tier}</strong> | Placement: <code>aks-primary-eastus2</code> / <code>aks-secondary-westus2</code> (Click node to simulate decision)`;
       }
     }
   }

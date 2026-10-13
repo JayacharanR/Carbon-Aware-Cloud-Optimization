@@ -34,7 +34,15 @@ spec:
         app.kubernetes.io/name: neo4j
         app.kubernetes.io/part-of: trust-gated-carbon-scheduler
     spec:
+      # The Service named neo4j would inject NEO4J_PORT_* variables, which
+      # Neo4j reads as (invalid) config settings and refuses to start.
+      enableServiceLinks: false
       securityContext:
+        # Run as the image's neo4j user; as root the entrypoint needs CHOWN
+        # and SETUID, which the container drops.
+        runAsNonRoot: true
+        runAsUser: 7474
+        runAsGroup: 7474
         fsGroup: 7474
         seccompProfile:
           type: RuntimeDefault

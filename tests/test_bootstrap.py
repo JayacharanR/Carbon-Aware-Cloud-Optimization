@@ -72,6 +72,32 @@ class BootstrapTests(unittest.TestCase):
         }
         self.assertEqual(bootstrap._infra_missing(values), [])
 
+    def test_resource_group_location_defaults_to_primary_region(self) -> None:
+        values = {
+            "AZURE_RESOURCE_GROUP": "resource-group",
+            "AZURE_PRIMARY_REGION": "eastus2",
+            "AZURE_SECONDARY_REGION": "westus2",
+            "AZURE_BUDGET_MONTHLY_AMOUNT": "100",
+            "AZURE_SSH_PUBLIC_KEY": "ssh-ed25519 AAAA test",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "infra" / "bicep").mkdir(parents=True)
+            old_root = bootstrap.REPO_ROOT
+            bootstrap.REPO_ROOT = root
+            try:
+                bootstrap._render_infrastructure(values, force=True)
+                rendered = (root / "infra" / "bicep" / "main.bicepparam").read_text(encoding="utf-8")
+                self.assertIn("param resourceGroupLocation = 'eastus2'", rendered)
+
+                bootstrap._render_infrastructure(
+                    {**values, "AZURE_RESOURCE_GROUP_LOCATION": "eastus"}, force=True
+                )
+                rendered = (root / "infra" / "bicep" / "main.bicepparam").read_text(encoding="utf-8")
+                self.assertIn("param resourceGroupLocation = 'eastus'", rendered)
+            finally:
+                bootstrap.REPO_ROOT = old_root
+
     def test_experiment_validation_requires_pilot_latency_values(self) -> None:
         missing = bootstrap._experiment_missing({})
         self.assertIn("LATENCY_PRIMARY_P95_MS", missing)
@@ -148,8 +174,23 @@ class BootstrapTests(unittest.TestCase):
             loaded = bootstrap.load_experiment_config(config_path)
             self.assertEqual(loaded.azure.primary_region, "eastus")
             self.assertEqual(loaded.workload.profile_id, "pilot")
+            # gate section rendered with v2.1 defaults when the env omits it
+            self.assertEqual(loaded.gate.profile.value, "v2.1")
+            self.assertEqual(loaded.gate.max_data_age_seconds, 7200)
+            self.assertEqual(loaded.gate.carbon_regret_tolerance, 0.05)
+            self.assertEqual(loaded.gate.llm_num_ctx, 8192)
+            self.assertEqual(loaded.gate.ragas_max_tokens, 4096)
+            self.assertEqual(loaded.gate.last_known_good_max_age_seconds, 21600)
 
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+            raw["gate"]["profile"] = "as_built"
+            config_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+            self.assertEqual(bootstrap.load_experiment_config(config_path).gate.profile.value, "as_built")
+            raw["gate"]["profile"] = "bogus"
+            config_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+            with self.assertRaises(bootstrap.ConfigurationError):
+                bootstrap.load_experiment_config(config_path)
+            raw["gate"]["profile"] = "v2"
             raw["trust"]["weights"]["data_freshness"] = 0.1
             config_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
             with self.assertRaises(bootstrap.ConfigurationError):

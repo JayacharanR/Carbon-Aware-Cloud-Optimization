@@ -239,6 +239,7 @@ class ElectricityMapsClient:
             forecast = self._extract_forecast(forecast_record.payload)
             region_data = CarbonRegionData(
                 provider_region=provider_region,
+                reported_zone=reported_zone(latest_record.payload, forecast_record.payload),
                 source=CarbonDataSource.LIVE,
                 current=current,
                 forecast=forecast,
@@ -316,11 +317,17 @@ class ElectricityMapsClient:
             endpoint = endpoint_by_mode[query_mode]
         except KeyError as error:
             raise ValueError(f"unsupported query mode: {query_mode}") from error
-        params: dict[str, Any] = {
-            "dataCenterProvider": self.provider,
-            "dataCenterRegion": provider_region,
-            "temporalGranularity": self.temporal_granularity,
-        }
+        # The dataCenterProvider lookup can resolve to the caller's own grid
+        # (e.g. IN-SO from India) for every region, so provider "zone" sends
+        # the Electricity Maps zone identifier directly instead.
+        if self.provider == "zone":
+            params: dict[str, Any] = {"zone": provider_region}
+        else:
+            params = {
+                "dataCenterProvider": self.provider,
+                "dataCenterRegion": provider_region,
+            }
+        params["temporalGranularity"] = self.temporal_granularity
         if query_mode == "forecast":
             params["horizonHours"] = self.forecast_horizon_hours
         if extra_params:
@@ -419,6 +426,26 @@ class ElectricityMapsClient:
                 continue
             points.append(point)
         return points
+
+
+def reported_zone(*payloads: Any) -> str | None:
+    """Zone the provider says it answered for (Electricity Maps ``zone`` field).
+
+    None when no response names a zone; ``conflict:A/B`` when the latest and
+    forecast responses disagree (never equal to a configured zone, so the
+    provenance rail rejects it).
+    """
+
+    zones = {
+        payload["zone"].strip()
+        for payload in payloads
+        if isinstance(payload, dict) and isinstance(payload.get("zone"), str) and payload["zone"].strip()
+    }
+    if not zones:
+        return None
+    if len(zones) == 1:
+        return zones.pop()
+    return "conflict:" + "/".join(sorted(zones))
 
 
 def load_replay_trace(path: str | Path) -> list[CarbonSnapshot]:

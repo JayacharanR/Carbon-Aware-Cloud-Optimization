@@ -39,13 +39,21 @@ from carbon_scheduler.schemas import (  # noqa: E402
     DecisionInput,
     DecisionMode,
     DependencyContext,
+    GateProfile,
 )
 from carbon_scheduler.settings import configuration_sha256, load_experiment_config  # noqa: E402
-from carbon_scheduler.workflow import SchedulerWorkflow, load_latency_catalog  # noqa: E402
+from carbon_scheduler.trust import GatePolicy  # noqa: E402
+from carbon_scheduler.workflow import (  # noqa: E402
+    SchedulerWorkflow,
+    load_latency_catalog,
+    trim_snapshot_to_window,
+)
 from carbon_scheduler.retrieval import (  # noqa: E402
+    ContextRecord,
     ContextRetriever,
     InMemoryContextStore,
     QdrantContextStore,
+    render_retrieval_document,
 )
 from carbon_scheduler.telemetry import NoopTelemetry, configure_otlp  # noqa: E402
 
@@ -75,6 +83,7 @@ class RunOptions:
     unavailable_regions: frozenset[str]
     max_cycles: int | None
     latency_catalog_path: Path | None = None
+    gate_profile: GateProfile | None = None
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -116,6 +125,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="mark a configured region unavailable in the decision input (repeatable)",
     )
     parser.add_argument("--max-cycles", type=int, help="run only the first N trace snapshots")
+    parser.add_argument(
+        "--gate-profile",
+        choices=[profile.value for profile in GateProfile],
+        help="trust-gate profile; defaults to config gate.profile (v2.1). v2 = without the model-feasibility "
+        "rail; as_built = original behaviour",
+    )
     return parser
 
 
@@ -204,9 +219,11 @@ def run_from_options(options: RunOptions) -> Path:
         raise ValueError(f"--unavailable-region contains unknown region(s): {sorted(unknown_unavailable)}")
     cluster_available = {region: region not in unavailable for region in regions}
 
+    gate_profile = options.gate_profile or config.gate.profile
+    gate = gate_policy_from_config(config, gate_profile)
     executor = _build_executor(config, options, regions)
-    agent = _build_agent(config, options, latency_catalog)
-    evaluator = _build_evaluator(config, options)
+    agent = _build_agent(config, options, latency_catalog, gate_profile)
+    evaluator = _build_evaluator(config, options, gate_profile)
     orchestration_backend = os.environ.get(
         "SCHEDULER_ORCHESTRATION_BACKEND", "direct"
     ).strip().lower()
@@ -227,6 +244,7 @@ def run_from_options(options: RunOptions) -> Path:
         slot_minutes=config.milp.slot_minutes,
         orchestration_backend=orchestration_backend,
         telemetry=telemetry,
+        gate=gate,
     )
     retriever_backend = os.environ.get("SCHEDULER_RETRIEVAL_BACKEND", "in_memory").strip().lower()
     if retriever_backend == "qdrant":
@@ -272,6 +290,7 @@ def run_from_options(options: RunOptions) -> Path:
             "dry_run": options.dry_run,
             "retrieval_backend": retriever_backend,
             "orchestration_backend": orchestration_backend,
+            "gate_profile": gate_profile.value,
             "notes": (
                 "Demo/plumbing artifact; contains no real workload measurements."
                 if options.demo_agent or options.demo_evaluator or options.dry_run
@@ -294,6 +313,14 @@ def run_from_options(options: RunOptions) -> Path:
 
     for index, snapshot in enumerate(snapshots):
         cycle_id = f"{options.run_id}-cycle-{index + 1:04d}"
+        if gate_profile.is_v2_family:
+            # v2 compact context: only forecast points the MILP can use.
+            snapshot = trim_snapshot_to_window(
+                snapshot,
+                earliest_start=earliest_start,
+                deadline=deadline,
+                slot_minutes=config.milp.slot_minutes,
+            )
         decision_input = DecisionInput(
             run_id=options.run_id,
             cycle_id=cycle_id,
@@ -313,28 +340,81 @@ def run_from_options(options: RunOptions) -> Path:
             retrieval_ids = _add_context(retriever, decision_input, graph_context)
         decision_input = decision_input.model_copy(update={"retrieval_context_ids": retrieval_ids})
         with telemetry.span("scheduler.context.retrieve"):
-            records = retriever.retrieve(
+            records, documents = retrieve_decision_context(
+                retriever,
                 query_text=(
                     f"{config.workload.profile_id} {config.workload.frontend_service} "
                     "carbon region deadline latency"
                 ),
                 as_of=snapshot.decision_time,
                 run_id=options.run_id,
-                limit=8,
+                gate_profile=gate_profile,
             )
         result = workflow.run_cycle(
             mode=options.mode,
             decision_input=decision_input,
             graph_context=graph_context,
-            retrieval_documents=[record.content for record in records],
+            retrieval_documents=documents,
         )
         writer.append(result.to_record())
         print(
             f"cycle {index + 1}/{len(snapshots)}: outcome={result.outcome} "
-            f"fallback={bool(result.execution_receipt and result.execution_receipt.fallback_triggered)}"
+            f"fallback={bool(result.execution_receipt and result.execution_receipt.fallback_triggered)} "
+            f"gate={gate_profile.value}"
         )
 
     return writer.run_dir
+
+
+def gate_policy_from_config(config: Any, profile: GateProfile) -> GatePolicy:
+    """Runtime gate settings; expected zones come from the carbon section."""
+
+    return GatePolicy(
+        profile=profile,
+        max_data_age_seconds=float(config.gate.max_data_age_seconds),
+        carbon_regret_tolerance=float(config.gate.carbon_regret_tolerance),
+        last_known_good_max_age_seconds=float(config.gate.last_known_good_max_age_seconds),
+        model_feasibility_rail=getattr(config.gate, "model_feasibility_rail", None),
+        expected_provider_regions={
+            config.azure.primary_region: config.carbon.primary_provider_region,
+            config.azure.secondary_region: config.carbon.secondary_provider_region,
+        },
+        expected_zones={
+            region: zone
+            for region, zone in (
+                (config.azure.primary_region, config.carbon.primary_expected_zone),
+                (config.azure.secondary_region, config.carbon.secondary_expected_zone),
+            )
+            if zone
+        },
+    )
+
+
+def retrieve_decision_context(
+    retriever: ContextRetriever,
+    *,
+    query_text: str,
+    as_of: Any,
+    run_id: str,
+    gate_profile: GateProfile,
+    limit: int = 8,
+) -> tuple[list[ContextRecord], list[str]]:
+    """Return (records, documents passed to the workflow) for one decision.
+
+    as_built: lexical top-``limit`` over every document of the run, passed as
+    raw content (no evidence IDs; from cycle 10 only graph documents remain,
+    see ``ContextRetriever.latest_per_source``).
+    v2: the decision's own carbon snapshot and dependency graph, each rendered
+    with its ``[evidence_id=...]`` header so the LLM can cite it.
+    """
+
+    if gate_profile is GateProfile.AS_BUILT:
+        records = retriever.retrieve(query_text=query_text, as_of=as_of, run_id=run_id, limit=limit)
+        return records, [record.content for record in records]
+    records = retriever.latest_per_source(
+        source_types=("carbon-snapshot", "dependency-graph"), as_of=as_of, run_id=run_id
+    )
+    return records, [render_retrieval_document(record) for record in records]
 
 
 def _load_graph(path: Path | None, *, target_service: str, allow_minimal: bool) -> ManifestDependencyGraph:
@@ -348,7 +428,12 @@ def _load_graph(path: Path | None, *, target_service: str, allow_minimal: bool) 
     return graph
 
 
-def _build_agent(config: Any, options: RunOptions, latency_catalog: Mapping[str, Mapping[str, float]]) -> Any:
+def _build_agent(
+    config: Any,
+    options: RunOptions,
+    latency_catalog: Mapping[str, Mapping[str, float]],
+    gate_profile: GateProfile = GateProfile.AS_BUILT,
+) -> Any:
     if options.mode in {DecisionMode.MILP_ONLY, DecisionMode.STATIC_REFERENCE}:
         return None
     if options.demo_agent:
@@ -356,15 +441,19 @@ def _build_agent(config: Any, options: RunOptions, latency_catalog: Mapping[str,
         if not values:
             raise ValueError(f"latency catalog has no profile {config.workload.profile_id!r}")
         return DemoProposalAgent(expected_p95_latency_ms=min(values.values()))
+    v2 = gate_profile.is_v2_family
     return OllamaStructuredAgent(
         base_url=config.ollama.base_url,
         model=config.ollama.model,
         timeout_seconds=config.ollama.request_timeout_seconds,
         retry_count=config.ollama.retry_count,
+        # v2: explicit context window (+ overflow detection) and compact prompt
+        num_ctx=config.gate.llm_num_ctx if v2 else None,
+        compact_prompt=v2,
     )
 
 
-def _build_evaluator(config: Any, options: RunOptions) -> Any:
+def _build_evaluator(config: Any, options: RunOptions, gate_profile: GateProfile = GateProfile.AS_BUILT) -> Any:
     if options.mode is not DecisionMode.HYBRID:
         return None
     if options.demo_evaluator is not None:
@@ -373,6 +462,7 @@ def _build_evaluator(config: Any, options: RunOptions) -> Any:
         base_url=config.ollama.base_url,
         model=config.ollama.model,
         timeout_seconds=config.ollama.request_timeout_seconds,
+        max_tokens=config.gate.ragas_max_tokens if gate_profile.is_v2_family else None,
     )
 
 
@@ -525,6 +615,7 @@ def main(argv: list[str] | None = None) -> int:
             demo_evaluator=_parse_demo_evaluator(args.demo_evaluator),
             unavailable_regions=frozenset(args.unavailable_region),
             max_cycles=args.max_cycles,
+            gate_profile=GateProfile(args.gate_profile) if args.gate_profile else None,
         )
         run_dir = run_from_options(options)
         print(f"run artifacts: {run_dir}")

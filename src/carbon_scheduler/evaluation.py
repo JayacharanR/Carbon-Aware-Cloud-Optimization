@@ -87,16 +87,28 @@ class RagasOllamaEvaluator:
     introduced.  The configured Ollama endpoint must expose its `/v1` API.
     """
 
-    def __init__(self, *, base_url: str, model: str, timeout_seconds: float) -> None:
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        model: str,
+        timeout_seconds: float,
+        max_tokens: int | None = None,
+    ) -> None:
         if not base_url.strip():
             raise ValueError("base_url must not be empty")
         if not model.strip():
             raise ValueError("model must not be empty")
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if max_tokens is not None and max_tokens <= 0:
+            raise ValueError("max_tokens must be positive when supplied")
         self.base_url = _openai_compatible_base_url(base_url)
         self.model = model
         self.timeout_seconds = timeout_seconds
+        # None keeps the RAGAS library default (1024 in ragas 0.4.x), which
+        # can truncate a local model's structured output.
+        self.max_tokens = max_tokens
 
     def evaluate(
         self,
@@ -164,7 +176,8 @@ class RagasOllamaEvaluator:
             timeout=self.timeout_seconds,
         )
         try:
-            evaluator_llm = llm_factory(self.model, provider="openai", client=client)
+            model_args = {"max_tokens": self.max_tokens} if self.max_tokens is not None else {}
+            evaluator_llm = llm_factory(self.model, provider="openai", client=client, **model_args)
             faithfulness = Faithfulness(llm=evaluator_llm)
             context_precision = ContextPrecision(llm=evaluator_llm)
             faithfulness_result = await faithfulness.ascore(

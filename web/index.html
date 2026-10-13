@@ -28,7 +28,7 @@
       <div class="header-status-group">
         <div class="status-badge">
           <span class="pulse-dot"></span>
-          <span>aks-primary-eastus (Ready)</span>
+          <span>aks-primary-eastus2 (Ready)</span>
         </div>
         <div class="status-badge">
           <span class="pulse-dot"></span>
@@ -73,7 +73,7 @@
 
           <div class="controls-toolbar">
             <div class="pill-toggle">
-              <button id="btnResetBaseline" class="pill-btn active">East US (Baseline)</button>
+              <button id="btnResetBaseline" class="pill-btn active">East US 2 (Baseline)</button>
               <button id="btnTriggerReroute2" class="pill-btn" onclick="document.getElementById('btnTriggerReroute').click()">West US 2 (Clean)</button>
             </div>
             <button id="btnSimulateGridSurge" class="btn-secondary" title="Simulate carbon intensity spike in PJM grid">
@@ -99,13 +99,13 @@
 
           <!-- Overlay Cluster HUDs -->
           <div class="cluster-hud-container">
-            <!-- Primary Cluster HUD (East US) — CLICKABLE -->
+            <!-- Primary Cluster HUD (East US 2) — CLICKABLE -->
             <div id="primaryClusterHud" class="hud-panel primary-cluster active clickable" title="Click to run AI decision simulation">
               <div class="hud-header">
-                <span class="cluster-tag">Azure Primary · East US</span>
+                <span class="cluster-tag">Azure Primary · East US 2</span>
                 <span class="pulse-dot crimson"></span>
               </div>
-              <div class="cluster-name">aks-primary-eastus</div>
+              <div class="cluster-name">aks-primary-eastus2</div>
               <div class="carbon-badge high" id="primaryCarbonBadge">
                 <span>⚡ <span id="liveEastIntensity">loading…</span></span>
               </div>
@@ -210,7 +210,7 @@
             <div class="metadata-list">
               <div class="metadata-row">
                 <span class="meta-key">Cluster Context <span id="clusterStatusBadge" style="font-size:0.65rem;"></span></span>
-                <span class="meta-val" id="metaClusterContext">aks-primary-eastus (Group_1_East)</span>
+                <span class="meta-val" id="metaClusterContext">aks-primary-eastus2 (Group_1_East)</span>
               </div>
               <div class="metadata-row">
                 <span class="meta-key">Primary Pods (benchmark ns)</span>
@@ -428,7 +428,7 @@
     <div class="container">
       <div>Carbon-Aware Cloud Optimization &copy; 2026 · Built on Azure Kubernetes Service (AKS) & Electricity Maps</div>
       <div style="margin-top: 6px; font-size: 0.74rem; color: var(--c-slate-border);">
-        DeathStarBench Commit: <code>6ecb097</code> · Primary: <code>eastus</code> · Secondary: <code>westus2</code>
+        DeathStarBench Commit: <code>6ecb097</code> · Primary: <code>eastus2</code> · Secondary: <code>westus2</code>
       </div>
     </div>
   </footer>

@@ -185,5 +185,11 @@ $controllerDeployment = Get-Content -Raw (Join-Path $controllerDirectory 'deploy
 $controllerDeployment = $controllerDeployment.Replace('image: carbon-scheduler-controller', "image: $ControllerImage")
 $controllerDeployment | & kubectl --context $PrimaryContext apply -f -
 if ($LASTEXITCODE -ne 0) { throw 'Unable to apply controller Deployment.' }
+if (-not $hasAnyRunInput) {
+    # With an empty EXPERIMENT_MODE the controller exits at startup, so a
+    # running replica would only crash-loop. Keep it at zero until a run is
+    # configured; supplying run inputs re-applies the manifest's one replica.
+    Invoke-Kubectl -Context $PrimaryContext -Arguments @('-n', 'scheduler-system', 'scale', 'deployment/scheduler-controller', '--replicas=0')
+}
 
 Write-Host 'Platform manifests applied. Deploy each independent DeathStarBench release with install-deathstarbench.ps1, then wait for component readiness before beginning a pilot.'

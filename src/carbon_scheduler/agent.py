@@ -35,6 +35,20 @@ class AgentResponseError(AgentError):
     """The model returned output that is not a permitted proposal."""
 
 
+class AgentContextOverflowError(AgentError):
+    """The prompt does not fit the model context window (v2 fails closed)."""
+
+
+# Conservative upper bound on characters per llama-family BPE token for this
+# JSON-heavy prompt (measured: 11,652 chars -> 4,205 tokens = 2.8 chars/token).
+# chars / 4 is therefore a LOWER bound on the prompt's token count.  Ollama 0.33
+# has no tokenize endpoint, so overflow is detected with this bound: before the
+# call (bound + output reserve > num_ctx) and after it (Ollama reported fewer
+# evaluated prompt tokens than the bound -> it silently truncated the input,
+# as observed: 107,064 chars evaluated as 2,060 tokens at num_ctx 4096).
+CHARS_PER_TOKEN_UPPER_BOUND = 4
+
+
 class ProposalAgent(Protocol):
     def propose(
         self,
@@ -69,17 +83,27 @@ class OllamaStructuredAgent:
         timeout_seconds: float,
         retry_count: int = 0,
         session: requests.Session | None = None,
+        num_ctx: int | None = None,
+        compact_prompt: bool = False,
+        output_token_reserve: int = 1024,
     ) -> None:
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
         if retry_count < 0:
             raise ValueError("retry_count must not be negative")
+        if num_ctx is not None and num_ctx <= output_token_reserve:
+            raise ValueError("num_ctx must exceed output_token_reserve")
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout_seconds = timeout_seconds
         self.retry_count = retry_count
         self.session = session or requests.Session()
         self.last_call: AgentCallRecord | None = None
+        # v2 gate: an explicit context window enables overflow detection;
+        # None (as_built) sends no options and keeps the server default.
+        self.num_ctx = num_ctx
+        self.compact_prompt = compact_prompt
+        self.output_token_reserve = output_token_reserve
 
     def propose(
         self,
@@ -113,10 +137,22 @@ class OllamaStructuredAgent:
                         retrieval_context=retrieval_context,
                         request_id=request_id,
                         model_name=self.model,
+                        compact=self.compact_prompt,
                     ),
                 },
             ],
         }
+        min_prompt_tokens: int | None = None
+        if self.num_ctx is not None:
+            payload["options"] = {"num_ctx": self.num_ctx}
+            prompt_chars = sum(len(message["content"]) for message in payload["messages"])
+            min_prompt_tokens = prompt_chars // CHARS_PER_TOKEN_UPPER_BOUND
+            if min_prompt_tokens + self.output_token_reserve > self.num_ctx:
+                self._record_failure(request_id, endpoint, started_at, 0, "context_overflow")
+                raise AgentContextOverflowError(
+                    f"prompt needs at least ~{min_prompt_tokens} tokens ({prompt_chars} chars) plus "
+                    f"{self.output_token_reserve} reserved for output, but num_ctx={self.num_ctx}"
+                )
 
         errors: list[str] = []
         network_failure = False
@@ -125,6 +161,16 @@ class OllamaStructuredAgent:
                 response = self.session.post(endpoint, json=payload, timeout=self.timeout_seconds)
                 response.raise_for_status()
                 raw = response.json()
+                evaluated = raw.get("prompt_eval_count") if isinstance(raw, dict) else None
+                if (
+                    min_prompt_tokens is not None
+                    and isinstance(evaluated, int)
+                    and evaluated < min_prompt_tokens
+                ):
+                    raise AgentContextOverflowError(
+                        f"Ollama evaluated {evaluated} prompt tokens but the prompt has at least "
+                        f"~{min_prompt_tokens}; the input was truncated (num_ctx={self.num_ctx})"
+                    )
                 content = _ollama_content(raw)
                 proposal = parse_action_proposal(content)
                 _validate_response_identity(proposal, request_id=request_id, model_name=self.model)
@@ -138,6 +184,10 @@ class OllamaStructuredAgent:
                     completed_at=datetime.now().astimezone(),
                 )
                 return proposal
+            except AgentContextOverflowError as error:
+                # Deterministic for a given prompt: retrying cannot help.
+                self._record_failure(request_id, endpoint, started_at, attempt, str(error))
+                raise
             except requests.RequestException as error:
                 network_failure = True
                 errors.append(str(error))
@@ -171,6 +221,19 @@ class OllamaStructuredAgent:
         if network_failure:
             raise AgentUnavailableError(message)
         raise AgentResponseError(message)
+
+    def _record_failure(
+        self, request_id: str, endpoint: str, started_at: datetime, attempts: int, error: str
+    ) -> None:
+        self.last_call = AgentCallRecord(
+            request_id=request_id,
+            endpoint=endpoint,
+            model=self.model,
+            attempts=attempts,
+            started_at=started_at,
+            completed_at=datetime.now().astimezone(),
+            error=error,
+        )
 
 
 class DemoProposalAgent:
@@ -229,14 +292,23 @@ def build_scheduler_prompt(
     retrieval_context: str,
     request_id: str,
     model_name: str,
+    compact: bool = False,
 ) -> str:
-    """Render the bounded policy record presented to the LLM."""
+    """Render the bounded policy record presented to the LLM.
+
+    ``compact`` (v2 gate) keeps only forecast points inside the decision
+    window - the only points a valid action can use - and lists the evidence
+    IDs the model may cite.  ``compact=False`` renders the as_built prompt.
+    """
+
+    def in_scope(timestamp: datetime) -> bool:
+        return not compact or decision_input.earliest_start <= timestamp <= decision_input.deadline
 
     carbon = {
         region: {
             "current_carbon_intensity_gco2eq_per_kwh": data.current.carbon_intensity_gco2eq_per_kwh,
             "current_timestamp": data.current.timestamp.isoformat(),
-            "forecast": [point.model_dump(mode="json") for point in data.forecast],
+            "forecast": [point.model_dump(mode="json") for point in data.forecast if in_scope(point.timestamp)],
             "source": data.source.value,
         }
         for region, data in decision_input.carbon_snapshot.regions.items()
@@ -258,6 +330,9 @@ def build_scheduler_prompt(
         "retrieved_context": retrieval_context,
         "required_json_schema": ActionProposal.model_json_schema(),
     }
+    if compact:
+        # The retrieved documents carry "[evidence_id=...]" headers in v2.
+        policy["allowed_evidence_ids"] = list(decision_input.retrieval_context_ids)
     return json.dumps(policy, sort_keys=True, default=str)
 
 

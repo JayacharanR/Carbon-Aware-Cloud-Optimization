@@ -1,7 +1,7 @@
 /**
  * 60FPS Fluid Particle Traffic Animation Engine
  * Simulates real-time microservice workload routing across Azure AKS clusters
- * (aks-primary-eastus vs aks-secondary-westus2) with dynamic cubic bezier transitions.
+ * (aks-primary-eastus2 vs aks-secondary-westus2) with dynamic cubic bezier transitions.
  *
  * v2.0 — live carbon values from /api/live-carbon update node labels in real-time.
  */
@@ -56,9 +56,9 @@ class TrafficDirectorAnimation {
       orchestrator: { x: 0.5, y: 0.48, label: 'Hybrid AI & Trust Gate', sub: 'Trust: 0.97 (PASS)' },
       primary: {
         x: 0.20, y: 0.74,
-        label: 'aks-primary-eastus',
+        label: 'aks-primary-eastus2',
         sub: 'PJM Grid — loading…',
-        region: 'eastus',
+        region: 'eastus2',
       },
       secondary: {
         x: 0.80, y: 0.74,
@@ -352,7 +352,7 @@ class TrafficDirectorAnimation {
     ctx.save();
     ctx.shadowColor = isPrimaryActive ? this.colors.crimsonGlow : 'transparent';
     ctx.shadowBlur = 25;
-    this.drawNodeCircle(primary.x, primary.y, 28, isPrimaryActive ? this.colors.crimson : this.colors.slate, 'East US');
+    this.drawNodeCircle(primary.x, primary.y, 28, isPrimaryActive ? this.colors.crimson : this.colors.slate, 'East US 2');
     ctx.restore();
 
     const isSecondaryActive = this.state === 'optimized';
@@ -520,7 +520,7 @@ class TrafficDirectorAnimation {
       if (primaryHud) primaryHud.classList.add('active');
       if (secondaryHud) secondaryHud.classList.remove('active');
       if (statusMsg) {
-        statusMsg.innerHTML = `<span class="live-indicator crimson">● HIGH CARBON ALERT</span> Running on <strong>aks-primary-eastus</strong> (PJM Grid: <strong>${eastVal}</strong>). Carbon-aware dispatch pending.`;
+        statusMsg.innerHTML = `<span class="live-indicator crimson">● HIGH CARBON ALERT</span> Running on <strong>aks-primary-eastus2</strong> (PJM Grid: <strong>${eastVal}</strong>). Carbon-aware dispatch pending.`;
       }
       if (metricCarbonDiff) {
         metricCarbonDiff.textContent = `Baseline — PJM Grid (${eastVal})`;

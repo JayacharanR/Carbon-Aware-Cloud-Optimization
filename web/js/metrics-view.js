@@ -103,7 +103,7 @@ class MetricsViewController {
     // Live cluster context labels
     const clusterEl = document.getElementById('metaClusterContext');
     if (clusterEl) {
-      const primaryCtx = primary.context || 'aks-primary-eastus';
+      const primaryCtx = primary.context || 'aks-primary-eastus2';
       const secondaryCtx = secondary.context || 'aks-secondary-westus2';
       clusterEl.textContent = `${primaryCtx} | ${secondaryCtx}`;
     }
@@ -146,7 +146,7 @@ class MetricsViewController {
     if (ipEl) ipEl.textContent = '10.224.0.15';
     if (resetTimeEl) resetTimeEl.textContent = '2m 42s (Seed Reed98 limit=50)';
     // Will be overwritten by loadLiveClusterStatus() if API succeeds
-    if (clusterEl) clusterEl.textContent = 'aks-primary-eastus (Group_1_East) — checking…';
+    if (clusterEl) clusterEl.textContent = 'aks-primary-eastus2 (Group_1_East) — checking…';
   }
 
   renderPolicyTable() {
@@ -216,7 +216,7 @@ class MetricsViewController {
     const tfoot = tbody.closest('table')?.querySelector('tfoot');
     if (tfoot) {
       tfoot.innerHTML = `<tr><td colspan="7" style="font-size:10px;color:var(--c-text-muted);padding-top:6px;">
-        * Carbon intensity values from Electricity Maps live feed (US-MIDA-PJM → eastus, US-NW-BPAT → westus2).
+        * Carbon intensity values from Electricity Maps live feed (US-MIDA-PJM → eastus2, US-NW-BPAT → westus2).
         Table shows current live readings; experiment was run with PJM=563, BPA=168 historical values on 2026-09-07.
       </td></tr>`;
     }

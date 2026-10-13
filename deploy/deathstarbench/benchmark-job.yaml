@@ -49,6 +49,14 @@ spec:
           env:
             - name: TARGET_URL
               value: "${TARGET_URL}"
+            # compose-post.lua does require("socket"). The image's lua-socket
+            # package lives under /usr/share and /usr/lib, but wrk2's bundled
+            # LuaJIT only searches /usr/local. Without these paths the script
+            # fails to load and wrk2 silently sends plain GET / instead.
+            - name: LUA_PATH
+              value: "/usr/share/lua/5.1/?.lua;/usr/share/lua/5.1/?/init.lua;;"
+            - name: LUA_CPATH
+              value: "/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;;"
           volumeMounts:
             - name: workload
               mountPath: /workload

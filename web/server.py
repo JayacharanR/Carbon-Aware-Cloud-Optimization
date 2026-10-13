@@ -3,7 +3,7 @@
 
 Serves the frontend application and provides read-only telemetry APIs
 from repository artifacts, plus a live carbon intensity feed from
-Electricity Maps (zones: US-MIDA-PJM for eastus, US-NW-BPAT for westus2).
+Electricity Maps (zones: US-MIDA-PJM for eastus2, US-NW-BPAT for westus2).
 """
 
 from __future__ import annotations
@@ -28,25 +28,47 @@ from urllib.error import URLError
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WEB_DIR = REPO_ROOT / "web"
 
+
+def _load_dotenv() -> None:
+    """Load .env before the module-level settings below are read."""
+    env_file = REPO_ROOT / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+_load_dotenv()
+
 # ---------------------------------------------------------------------------
 # Electricity Maps zone configuration
-# US-MIDA-PJM  → Azure East US  (PJM interconnection, coal/gas heavy)
+# US-MIDA-PJM  → Azure East US 2 (PJM interconnection, coal/gas heavy)
 # US-NW-BPAT   → Azure West US 2 (Bonneville Power, hydro-heavy)
 # ---------------------------------------------------------------------------
-EM_API_KEY = os.environ.get(
-    "ELECTRICITY_MAPS_API_KEY", "em_TTevcp9h2dcfWwhZSxNZEBfwA3BqhXcn"
-)
+EM_API_KEY = os.environ.get("ELECTRICITY_MAPS_API_KEY", "")
 EM_API_BASE = os.environ.get(
     "ELECTRICITY_MAPS_API_BASE_URL", "https://api.electricitymaps.com/v4"
 ).rstrip("/")
 
-ZONE_EASTUS = os.environ.get("ELECTRICITY_MAPS_ZONE_EASTUS", "US-MIDA-PJM")
-ZONE_WESTUS2 = os.environ.get("ELECTRICITY_MAPS_ZONE_WESTUS2", "US-NW-BPAT")
+PRIMARY_REGION = os.environ.get("AZURE_PRIMARY_REGION", "eastus2")
+SECONDARY_REGION = os.environ.get("AZURE_SECONDARY_REGION", "westus2")
+# The *_EASTUS/*_WESTUS2 names are the older spellings of the same settings.
+ZONE_PRIMARY = os.environ.get(
+    "ELECTRICITY_MAPS_ZONE_PRIMARY",
+    os.environ.get("ELECTRICITY_MAPS_ZONE_EASTUS", "US-MIDA-PJM"),
+)
+ZONE_SECONDARY = os.environ.get(
+    "ELECTRICITY_MAPS_ZONE_SECONDARY",
+    os.environ.get("ELECTRICITY_MAPS_ZONE_WESTUS2", "US-NW-BPAT"),
+)
 
 POLL_INTERVAL_SECONDS = 300  # 5 minutes — matches Electricity Maps update cadence
 
 # Primary AKS context/cluster names from .env
-KUBE_CONTEXT_PRIMARY = os.environ.get("TARGET_PRIMARY_KUBE_CONTEXT", "aks-primary-eastus")
+KUBE_CONTEXT_PRIMARY = os.environ.get("TARGET_PRIMARY_KUBE_CONTEXT", "aks-primary-eastus2")
 KUBE_CONTEXT_SECONDARY = os.environ.get("TARGET_SECONDARY_KUBE_CONTEXT", "aks-secondary-westus2")
 BENCHMARK_NAMESPACE = os.environ.get("WORKLOAD_NAMESPACE", "benchmark")
 
@@ -60,16 +82,18 @@ class LiveCarbonPoller:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        # Seed with last known good values so the website is never empty
+        # Seed with last known good values so the website is never empty.
+        # The "eastus"/"westus2" keys are the front-end's primary/secondary
+        # slots; the actual regions are PRIMARY_REGION/SECONDARY_REGION.
         self._state: dict[str, Any] = {
             "eastus": {
-                "zone": ZONE_EASTUS,
+                "zone": ZONE_PRIMARY,
                 "intensity": None,
                 "updated_at": None,
                 "source": "pending",
             },
             "westus2": {
-                "zone": ZONE_WESTUS2,
+                "zone": ZONE_SECONDARY,
                 "intensity": None,
                 "updated_at": None,
                 "source": "pending",
@@ -111,8 +135,8 @@ class LiveCarbonPoller:
             return None
 
     def _poll_once(self) -> None:
-        east = self._fetch_zone(ZONE_EASTUS)
-        west = self._fetch_zone(ZONE_WESTUS2)
+        east = self._fetch_zone(ZONE_PRIMARY)
+        west = self._fetch_zone(ZONE_SECONDARY)
         now_iso = datetime.now(timezone.utc).isoformat()
 
         with self._lock:
@@ -129,10 +153,10 @@ class LiveCarbonPoller:
 
             if e_int is not None and w_int is not None:
                 if w_int < e_int:
-                    decided = "westus2"
+                    decided = SECONDARY_REGION
                     reduction_pct = round((e_int - w_int) / e_int * 100, 1)
                 else:
-                    decided = "eastus"
+                    decided = PRIMARY_REGION
                     reduction_pct = 0.0
                 self._state["decided_region"] = decided
                 self._state["carbon_reduction_pct"] = reduction_pct
@@ -141,7 +165,7 @@ class LiveCarbonPoller:
                 self._state["poll_error"] = "One or more zones returned no data"
 
         sys.stderr.write(
-            f"[CarbonPoller] {now_iso} | eastus={e_int} | westus2={w_int} | "
+            f"[CarbonPoller] {now_iso} | {PRIMARY_REGION}={e_int} | {SECONDARY_REGION}={w_int} | "
             f"decided={self._state.get('decided_region')}\n"
         )
 
@@ -302,22 +326,16 @@ def main() -> None:
     mimetypes.add_type("text/css", ".css")
     mimetypes.add_type("application/json", ".json")
 
-    # Load .env if present so env vars are available when server is run directly
-    env_file = REPO_ROOT / ".env"
-    if env_file.exists():
-        for line in env_file.read_text().splitlines():
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, _, value = line.partition("=")
-                os.environ.setdefault(key.strip(), value.strip())
+    if not EM_API_KEY:
+        sys.stderr.write("[Server] ELECTRICITY_MAPS_API_KEY is not set; live carbon polling will fail.\n")
 
     # Start the live carbon background poller
     poller = LiveCarbonPoller()
     CarbonSchedulerWebHandler.carbon_poller = poller
     poller.start()
     sys.stderr.write(
-        f"[Server] LiveCarbonPoller started — polling {ZONE_EASTUS} (eastus) "
-        f"and {ZONE_WESTUS2} (westus2) every {POLL_INTERVAL_SECONDS}s\n"
+        f"[Server] LiveCarbonPoller started — polling {ZONE_PRIMARY} ({PRIMARY_REGION}) "
+        f"and {ZONE_SECONDARY} ({SECONDARY_REGION}) every {POLL_INTERVAL_SECONDS}s\n"
     )
 
     server_address = (args.host, args.port)

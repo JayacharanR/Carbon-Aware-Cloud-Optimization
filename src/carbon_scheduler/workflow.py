@@ -3,24 +3,33 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping, TypedDict
+from typing import Any, Callable, Iterable, Mapping, TypedDict
 
 import yaml
 
-from .agent import AgentError, AgentResponseError, AgentUnavailableError, ProposalAgent
+from .agent import (
+    AgentContextOverflowError,
+    AgentError,
+    AgentResponseError,
+    AgentUnavailableError,
+    ProposalAgent,
+)
 from .evaluation import RagasScores, TrustEvaluationError, TrustEvaluator, build_canonical_policy_record
-from .executor import BenchmarkExecutor, ExecutionError
+from .executor import BenchmarkExecutor, DryRunExecutor, ExecutionError
 from .milp import solve_schedule
 from .schemas import (
     ActionProposal,
     ActionType,
     CarbonDataSource,
+    CarbonSnapshot,
     DecisionInput,
     DecisionMode,
     ExecutionReceipt,
+    GateProfile,
+    RailCheck,
     ScheduleCandidate,
     ScheduleResult,
     SchedulingRequest,
@@ -28,12 +37,29 @@ from .schemas import (
     TrustPolicy,
     TrustReport,
 )
-from .trust import evaluate_trust, validate_proposal
+from .trust import (
+    GatePolicy,
+    check_carbon_regret,
+    check_data_age,
+    check_evidence,
+    check_model_feasibility,
+    check_zone_provenance,
+    evaluate_trust,
+    evaluate_trust_v2,
+    observation_ages,
+    snapshot_data_age_seconds,
+    validate_proposal,
+)
 from .telemetry import NoopTelemetry, Telemetry
 
 
 class WorkflowError(RuntimeError):
     """A workflow prerequisite was missing or inconsistent."""
+
+
+# v2 data-integrity alert levels (CycleResult.alert_level / ExecutionReceipt.alert_level)
+ALERT_WARNING = "warning"  # last-known-good fallback after a data-rail failure
+ALERT_CRITICAL = "critical"  # data-integrity hold: no new session
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +74,20 @@ class CycleResult:
     execution_receipt: ExecutionReceipt | None
     outcome: str
     failure_reason: str | None = None
+    # The LLM's own proposal, kept even when the gate rejected it (the
+    # ``proposal`` field then holds the MILP fallback action).
+    agent_proposal: ActionProposal | None = None
+    gate_profile: GateProfile | None = None
+    # llm | milp | milp_last_known_good | data_integrity_hold | static_reference
+    decision_source: str | None = None
+    alert: bool = False
+    # v2 data-integrity handling: "warning" = last-known-good fallback (decided
+    # on older clean data), "critical" = hold (no new session).  None otherwise.
+    alert_level: str | None = None
+    # v2 hybrid: {"passed": bool, "failed_rails": [...], "reasons": [...]}
+    data_integrity: dict[str, Any] | None = None
+    # v2 last-known-good fallback: {"snapshot_id": ..., "age_seconds": ...}
+    last_known_good: dict[str, Any] | None = None
 
     def to_record(self) -> dict[str, Any]:
         """Convert to a JSON-safe event record without dropping failed states."""
@@ -55,8 +95,15 @@ class CycleResult:
         return {
             "record_type": "scheduler_cycle",
             "mode": self.mode.value,
+            "gate_profile": self.gate_profile.value if self.gate_profile else None,
             "outcome": self.outcome,
             "failure_reason": self.failure_reason,
+            "agent_proposal": self.agent_proposal.model_dump(mode="json") if self.agent_proposal else None,
+            "decision_source": self.decision_source,
+            "alert": self.alert,
+            "alert_level": self.alert_level,
+            "data_integrity": self.data_integrity,
+            "last_known_good": self.last_known_good,
             "decision_input": self.decision_input.model_dump(mode="json"),
             "proposal": self.proposal.model_dump(mode="json") if self.proposal else None,
             "trust_report": self.trust_report.model_dump(mode="json") if self.trust_report else None,
@@ -106,6 +153,8 @@ class SchedulerWorkflow:
         slot_minutes: int | None = None,
         orchestration_backend: str = "direct",
         telemetry: Telemetry | None = None,
+        gate: GatePolicy | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         if not default_region:
             raise ValueError("default_region must not be empty")
@@ -125,6 +174,35 @@ class SchedulerWorkflow:
             for profile, values in latency_catalog.items()
         }
         self.telemetry = telemetry or NoopTelemetry()
+        # Default is the corrected gate; GatePolicy(profile=AS_BUILT) restores
+        # the original behaviour exactly.
+        self.gate = gate or GatePolicy()
+        self._agent_proposal: ActionProposal | None = None
+        self._reference: tuple[tuple[str, str], SchedulingRequest, ScheduleResult] | None = None
+        # Per-run v2 state: the newest snapshot that passed the data rails and
+        # the region of the last placed session (kept by a data-integrity hold).
+        self._last_known_good: CarbonSnapshot | None = None
+        self._last_placement: str | None = None
+        # Scheduler clock.  A real executor gets the wall clock by default and
+        # every receipt records the dispatch time.  Under the v2 family, data
+        # age is then also measured against it and actions past the deadline
+        # are refused (as_built keeps its original behaviour: no refusal).
+        # Dry-run without an explicit clock keeps the snapshot's (trace) time.
+        real_executor = not isinstance(executor, DryRunExecutor)
+        self.dispatch_checks_deadline = real_executor and self.gate.profile.is_v2_family
+        self.clock = clock or (_wall_clock if real_executor else None)
+        self._cycle_now: datetime | None = None
+
+    def restore_state(
+        self,
+        *,
+        last_known_good: CarbonSnapshot | None,
+        last_placement: str | None,
+    ) -> None:
+        """Re-seed per-run state when a run is resumed from saved records."""
+
+        self._last_known_good = last_known_good
+        self._last_placement = last_placement
 
     def run_cycle(
         self,
@@ -144,19 +222,233 @@ class SchedulerWorkflow:
                 "scheduler.mode": mode.value,
             },
         ):
+            self._agent_proposal = None
+            self._reference = None
+            self._cycle_now = self.clock() if self.clock is not None else None
+            data_integrity: dict[str, Any] | None = None
+            if mode is DecisionMode.HYBRID and self.gate.profile.is_v2_family:
+                data_checks = self._data_rails(decision_input)
+                failed = [check for check in data_checks if not check.passed]
+                data_integrity = {
+                    "passed": not failed,
+                    "failed_rails": [check.name for check in failed],
+                    "reasons": [check.reason for check in failed],
+                }
+                if failed:
+                    # Never run the MILP (or the LLM) on inputs that failed a
+                    # data rail: last-known-good data, else hold.
+                    return self._stamp(self._data_integrity_response(decision_input, failed, data_integrity))
+                self._last_known_good = decision_input.carbon_snapshot
             if self.orchestration_backend == "langgraph":
-                return self._run_cycle_langgraph(
+                result = self._run_cycle_langgraph(
                     mode=mode,
                     decision_input=decision_input,
                     graph_context=graph_context,
                     retrieval_documents=retrieval_documents,
                 )
-            return self._run_cycle(
-                mode=mode,
-                decision_input=decision_input,
-                graph_context=graph_context,
-                retrieval_documents=retrieval_documents,
+            else:
+                result = self._run_cycle(
+                    mode=mode,
+                    decision_input=decision_input,
+                    graph_context=graph_context,
+                    retrieval_documents=retrieval_documents,
+                )
+            if data_integrity is not None:
+                result = replace(result, data_integrity=data_integrity)
+            return self._stamp(result)
+
+    def _stamp(self, result: CycleResult) -> CycleResult:
+        """Record profile, LLM proposal and decision source on every cycle."""
+
+        profile = self.gate.profile
+        receipt = result.execution_receipt
+        source = result.decision_source
+        if source is None and receipt is not None:
+            if result.mode is DecisionMode.STATIC_REFERENCE:
+                source = "static_reference"
+            elif result.mode is DecisionMode.LLM_ONLY:
+                source = "llm"
+            else:
+                source = "milp" if receipt.fallback_triggered or result.mode is DecisionMode.MILP_ONLY else "llm"
+        updates: dict[str, Any] = {
+            "gate_profile": profile,
+            "agent_proposal": self._agent_proposal,
+            "decision_source": source,
+        }
+        if result.trust_report is not None:
+            updates["trust_report"] = result.trust_report.model_copy(update={"gate_profile": profile})
+        if receipt is not None:
+            updates["execution_receipt"] = receipt.model_copy(
+                update={
+                    "gate_profile": profile,
+                    "decision_source": source,
+                    "alert": result.alert,
+                    "alert_level": result.alert_level,
+                }
             )
+            if result.outcome in {"dry_run", "executed"}:
+                self._last_placement = receipt.final_action.target_region
+        return replace(result, **updates)
+
+    # ---------------------------------------------------------------- v2 data integrity
+    def _data_rails(self, decision_input: DecisionInput) -> list[RailCheck]:
+        """Rails about the decision INPUTS (not the proposal): age and zone provenance."""
+
+        age_check, _ = check_data_age(
+            decision_input.carbon_snapshot, max_age_seconds=self.gate.max_data_age_seconds, now=self._cycle_now
+        )
+        provenance = check_zone_provenance(
+            decision_input.carbon_snapshot,
+            regions=decision_input.candidate_regions,
+            expected_provider_regions=self.gate.expected_provider_regions,
+            earliest_start=decision_input.earliest_start,
+            deadline=decision_input.deadline,
+            expected_zones=self.gate.expected_zones,
+        )
+        return [age_check, provenance]
+
+    def _data_integrity_response(
+        self,
+        decision_input: DecisionInput,
+        failed: list[RailCheck],
+        data_integrity: dict[str, Any],
+    ) -> CycleResult:
+        """v2: MILP on the last-known-good snapshot if recent enough, else hold.
+
+        The failing inputs are used for neither the LLM nor the MILP.
+        """
+
+        reason = "data integrity: " + "; ".join(f"{check.name}: {check.reason}" for check in failed)
+        report = TrustReport(
+            components=TrustComponentScores(),
+            rail_checks=failed,
+            weighted_score=None,
+            threshold=self.trust_policy.threshold,
+            passed=False,
+            failure_reason=reason,
+            gate_profile=GateProfile.V2,
+            data_age_seconds=snapshot_data_age_seconds(
+                decision_input.carbon_snapshot, decision_input.carbon_snapshot.decision_time
+            ),
+            clock_data_age_seconds=(
+                snapshot_data_age_seconds(decision_input.carbon_snapshot, self._cycle_now)
+                if self._cycle_now is not None
+                else None
+            ),
+        )
+        lkg = self._last_known_good
+        if lkg is not None:
+            # v2.1: last-known-good age against the scheduler clock when there
+            # is one (the failing snapshot's own decision_time is untrusted)
+            age = snapshot_data_age_seconds(lkg, self._cycle_now or decision_input.carbon_snapshot.decision_time)
+            if age <= self.gate.last_known_good_max_age_seconds:
+                lkg_input = decision_input.model_copy(update={"carbon_snapshot": lkg})
+                try:
+                    request = build_scheduling_request(
+                        lkg_input,
+                        default_region=self.default_region,
+                        latency_catalog=self.latency_catalog,
+                        slot_minutes=self.slot_minutes,
+                    )
+                    with self.telemetry.span("scheduler.milp.solve"):
+                        schedule_result = solve_schedule(request)
+                except Exception:  # unusable last-known-good inputs -> hold
+                    schedule_result = None
+                if schedule_result is not None and schedule_result.status == "selected":
+                    result = self._execute(
+                        mode=DecisionMode.HYBRID,
+                        decision_input=decision_input,
+                        proposal=proposal_from_schedule(schedule_result, lkg_input),
+                        trust_report=report,
+                        schedule_result=schedule_result,
+                        fallback_triggered=True,
+                    )
+                    # Decided on older clean data: operator attention is
+                    # warranted, but less urgently than a hold.
+                    return replace(
+                        result,
+                        decision_source="milp_last_known_good",
+                        alert=True,
+                        alert_level=ALERT_WARNING,
+                        data_integrity=data_integrity,
+                        last_known_good={"snapshot_id": lkg.snapshot_id, "age_seconds": age},
+                    )
+                reason += "; last-known-good MILP not selectable"
+            else:
+                reason += f"; last-known-good snapshot too old ({age:.0f}s)"
+        else:
+            reason += "; no last-known-good snapshot"
+        return self._hold(decision_input, report.model_copy(update={"failure_reason": reason}), data_integrity)
+
+    def _hold(
+        self,
+        decision_input: DecisionInput,
+        report: TrustReport,
+        data_integrity: dict[str, Any],
+    ) -> CycleResult:
+        """No new session: keep the previous placement (first cycle: static region).
+
+        The executor is deliberately NOT called, so a hold is a no-op for the
+        Kubernetes and dry-run executors alike; the receipt only records it.
+        """
+
+        region = self._last_placement or self.default_region
+        hold_action = ActionProposal(
+            action_type=ActionType.RUN_NOW,
+            target_region=region,
+            target_service=decision_input.dependency_context.target_service,
+            scheduled_time=None,
+            workload_profile=decision_input.workload_profile,
+            expected_p95_latency_ms=self._expected_latency(decision_input.workload_profile, region),
+            self_reported_confidence=0.0,
+            evidence_ids=[],
+            rationale="Data-integrity hold: no session started; placement stays in the held region.",
+            model_name="data-integrity-hold",
+            prompt_version="not-applicable",
+            request_id=f"hold-{decision_input.cycle_id}",
+        )
+        receipt = ExecutionReceipt(
+            run_id=decision_input.run_id,
+            cycle_id=decision_input.cycle_id,
+            mode=DecisionMode.HYBRID,
+            final_action=hold_action,
+            fallback_triggered=True,
+            execution_failure_reason="hold: " + (report.failure_reason or "data integrity"),
+            decision_source="data_integrity_hold",
+            alert=True,
+            alert_level=ALERT_CRITICAL,
+        )
+        return CycleResult(
+            mode=DecisionMode.HYBRID,
+            decision_input=decision_input,
+            proposal=None,
+            trust_report=report,
+            schedule_result=None,
+            execution_receipt=receipt,
+            outcome="data_integrity_hold",
+            failure_reason=report.failure_reason,
+            decision_source="data_integrity_hold",
+            alert=True,
+            alert_level=ALERT_CRITICAL,
+            data_integrity=data_integrity,
+        )
+
+    def _reference_schedule(self, decision_input: DecisionInput) -> tuple[SchedulingRequest, ScheduleResult]:
+        """Build and solve the MILP once per cycle (v2 regret rail + fallback share it)."""
+
+        key = (decision_input.run_id, decision_input.cycle_id)
+        if self._reference is not None and self._reference[0] == key:
+            return self._reference[1], self._reference[2]
+        request = build_scheduling_request(
+            decision_input,
+            default_region=self.default_region,
+            latency_catalog=self.latency_catalog,
+            slot_minutes=self.slot_minutes,
+        )
+        with self.telemetry.span("scheduler.milp.solve"):
+            schedule_result = solve_schedule(request)
+        self._reference = (key, request, schedule_result)
+        return request, schedule_result
 
     def _run_cycle_langgraph(
         self,
@@ -246,6 +538,7 @@ class SchedulerWorkflow:
                 return {"terminal_reason": reason}
             return {"terminal_outcome": "proposal_unavailable", "terminal_reason": reason}
 
+        self._agent_proposal = proposal
         rails = validate_proposal(
             proposal,
             allowed_regions=decision_input.candidate_regions,
@@ -306,14 +599,7 @@ class SchedulerWorkflow:
     def _lg_schedule(self, state: _LangGraphState, *, fallback_triggered: bool) -> dict[str, Any]:
         decision_input = state["decision_input"]
         try:
-            request = build_scheduling_request(
-                decision_input,
-                default_region=self.default_region,
-                latency_catalog=self.latency_catalog,
-                slot_minutes=self.slot_minutes,
-            )
-            with self.telemetry.span("scheduler.milp.solve"):
-                schedule_result = solve_schedule(request)
+            _, schedule_result = self._reference_schedule(decision_input)
         except Exception as error:
             return {
                 "terminal_outcome": "infeasible",
@@ -466,6 +752,7 @@ class SchedulerWorkflow:
                 failure_reason=reason,
             )
 
+        self._agent_proposal = proposal
         rails = validate_proposal(
             proposal,
             allowed_regions=decision_input.candidate_regions,
@@ -534,6 +821,15 @@ class SchedulerWorkflow:
         documents: list[str],
         graph_context: Mapping[str, Any],
     ) -> TrustReport:
+        if self.gate.profile.is_v2_family:
+            return self._evaluate_hybrid_trust_v2(
+                decision_input=decision_input,
+                proposal=proposal,
+                rails=rails,
+                documents=documents,
+                graph_context=graph_context,
+            )
+        # ---- as_built gate (unchanged) ----
         evaluator_error: str | None = None
         ragas_scores: RagasScores | None = None
         if self.trust_evaluator is None:
@@ -572,6 +868,103 @@ class SchedulerWorkflow:
             evaluator_error=evaluator_error,
         )
 
+    def _evaluate_hybrid_trust_v2(
+        self,
+        *,
+        decision_input: DecisionInput,
+        proposal: ActionProposal,
+        rails: list[Any],
+        documents: list[str],
+        graph_context: Mapping[str, Any],
+    ) -> TrustReport:
+        """Corrected gate: all hard rails first, RAGAS only for rail-clean proposals.
+
+        Hard rails = the seven deterministic proposal rails + data age + zone
+        provenance + cited-evidence validity + carbon regret vs the MILP
+        optimum.  A failed hard rail rejects outright (no score can override
+        it) and skips the RAGAS calls.  Otherwise the RAGAS-only weighted score
+        must reach ``trust.threshold`` (``evaluate_trust_v2``).
+        """
+
+        snapshot = decision_input.carbon_snapshot
+        age_check, data_age = check_data_age(
+            snapshot, max_age_seconds=self.gate.max_data_age_seconds, now=self._cycle_now
+        )
+        provenance = check_zone_provenance(
+            snapshot,
+            regions=decision_input.candidate_regions,
+            expected_provider_regions=self.gate.expected_provider_regions,
+            earliest_start=decision_input.earliest_start,
+            deadline=decision_input.deadline,
+            expected_zones=self.gate.expected_zones,
+        )
+        evidence = check_evidence(proposal, allowed_evidence_ids=decision_input.retrieval_context_ids)
+        try:
+            request, reference = self._reference_schedule(decision_input)
+        except Exception:  # missing latency/candidate data -> regret rail fails closed
+            request, reference = None, None
+        regret_check, proposal_ci, reference_ci, regret = check_carbon_regret(
+            proposal,
+            request=request,
+            reference=reference,
+            tolerance=self.gate.carbon_regret_tolerance,
+        )
+        checks = [*rails, age_check, provenance, evidence, regret_check]
+        if self.gate.feasibility_rail_enabled:
+            checks.append(check_model_feasibility(proposal, request=request))
+        extra = {
+            "data_age_seconds": data_age,
+            "clock_data_age_seconds": (
+                max(observation_ages(snapshot, self._cycle_now).values()) if self._cycle_now is not None else None
+            ),
+            "proposal_carbon_intensity_gco2eq_per_kwh": proposal_ci,
+            "reference_carbon_intensity_gco2eq_per_kwh": reference_ci,
+            "carbon_regret": regret,
+        }
+        components = TrustComponentScores(
+            nemo_rails=1.0 if rails and all(check.passed for check in rails) else 0.0,
+            data_freshness=1.0 if age_check.passed else 0.0,
+            execution_feasibility=(
+                1.0 if decision_input.cluster_available.get(proposal.target_region, False) else 0.0
+            ),
+        )
+        if any(not check.passed for check in checks):
+            report = evaluate_trust_v2(proposal, components=components, policy=self.trust_policy, rail_checks=checks)
+            return report.model_copy(update=extra)
+
+        evaluator_error: str | None = None
+        ragas_scores: RagasScores | None = None
+        if self.trust_evaluator is None:
+            evaluator_error = "RAGAS evaluator is not configured"
+        else:
+            try:
+                with self.telemetry.span("scheduler.trust.evaluate"):
+                    ragas_scores = self.trust_evaluator.evaluate(
+                        decision_input=decision_input,
+                        proposal=proposal,
+                        retrieval_documents=documents,
+                        canonical_policy=build_canonical_policy_record(decision_input, dict(graph_context)),
+                    )
+            except TrustEvaluationError as error:
+                evaluator_error = str(error)
+            except Exception as error:  # evaluator integrations fail closed
+                evaluator_error = f"unexpected evaluator failure: {error}"
+        if ragas_scores is not None:
+            components = components.model_copy(
+                update={
+                    "ragas_faithfulness": ragas_scores.faithfulness,
+                    "ragas_context_precision": ragas_scores.context_precision,
+                }
+            )
+        report = evaluate_trust_v2(
+            proposal,
+            components=components,
+            policy=self.trust_policy,
+            rail_checks=checks,
+            evaluator_error=evaluator_error,
+        )
+        return report.model_copy(update=extra)
+
     def _run_milp(
         self,
         decision_input: DecisionInput,
@@ -579,14 +972,7 @@ class SchedulerWorkflow:
         fallback_triggered: bool,
         failed_trust_report: TrustReport | None = None,
     ) -> CycleResult:
-        request = build_scheduling_request(
-            decision_input,
-            default_region=self.default_region,
-            latency_catalog=self.latency_catalog,
-            slot_minutes=self.slot_minutes,
-        )
-        with self.telemetry.span("scheduler.milp.solve"):
-            schedule_result = solve_schedule(request)
+        _, schedule_result = self._reference_schedule(decision_input)
         if schedule_result.status != "selected":
             return CycleResult(
                 mode=DecisionMode.HYBRID if fallback_triggered else DecisionMode.MILP_ONLY,
@@ -665,6 +1051,36 @@ class SchedulerWorkflow:
         schedule_result: ScheduleResult | None,
         fallback_triggered: bool,
     ) -> CycleResult:
+        dispatched_at = self.clock() if self.clock is not None else None
+        if self.dispatch_checks_deadline and dispatched_at is not None and dispatched_at > decision_input.deadline:
+            # Real execution only: the rails checked the window against frozen
+            # time; refuse an action whose window closed before dispatch.
+            reason = (
+                f"deadline passed: dispatch at {dispatched_at.isoformat()} is after the deadline "
+                f"{decision_input.deadline.isoformat()}; no session started"
+            )
+            return CycleResult(
+                mode=mode,
+                decision_input=decision_input,
+                proposal=proposal,
+                trust_report=trust_report,
+                schedule_result=schedule_result,
+                execution_receipt=ExecutionReceipt(
+                    run_id=decision_input.run_id,
+                    cycle_id=decision_input.cycle_id,
+                    mode=mode,
+                    final_action=proposal,
+                    fallback_triggered=fallback_triggered,
+                    execution_failure_reason=reason,
+                    alert=True,
+                    alert_level=ALERT_CRITICAL,
+                    dispatched_at=dispatched_at,
+                ),
+                outcome="deadline_passed",
+                failure_reason=reason,
+                alert=True,
+                alert_level=ALERT_CRITICAL,
+            )
         try:
             with self.telemetry.span("scheduler.executor.execute"):
                 receipt = self.executor.execute(
@@ -700,6 +1116,8 @@ class SchedulerWorkflow:
             )
 
         receipt = _with_slo_status(receipt, decision_input)
+        if dispatched_at is not None:
+            receipt = receipt.model_copy(update={"dispatched_at": dispatched_at})
         outcome = "dry_run" if (receipt.execution_failure_reason or "").startswith("dry-run:") else (
             "execution_failed" if receipt.execution_failure_reason else "executed"
         )
@@ -834,6 +1252,37 @@ def build_scheduling_request(
     )
 
 
+def trim_snapshot_to_window(
+    snapshot: CarbonSnapshot,
+    *,
+    earliest_start: datetime,
+    deadline: datetime,
+    slot_minutes: int | None,
+) -> CarbonSnapshot:
+    """Keep only forecast points the MILP can use (v2 compact context).
+
+    Same filter as ``build_scheduling_request`` (window bounds and slot grid
+    with a one-second tolerance), so MILP decisions are unchanged while the
+    LLM prompt and the retrieved snapshot document shrink to the decision
+    window.  ``current`` is always kept.
+    """
+
+    interval = slot_minutes * 60 if slot_minutes else None
+    regions = {}
+    for name, data in snapshot.regions.items():
+        kept = []
+        for point in data.forecast:
+            if not earliest_start <= point.timestamp <= deadline:
+                continue
+            if interval is not None:
+                remainder = (point.timestamp - earliest_start).total_seconds() % interval
+                if min(remainder, interval - remainder) > 1.0:
+                    continue
+            kept.append(point)
+        regions[name] = data.model_copy(update={"forecast": kept})
+    return snapshot.model_copy(update={"regions": regions})
+
+
 def proposal_from_schedule(
     schedule: ScheduleResult,
     decision_input: DecisionInput,
@@ -878,9 +1327,15 @@ def _freshness_score(decision_input: DecisionInput) -> float:
     return 1.0
 
 
+def _wall_clock() -> datetime:
+    return datetime.now(UTC)
+
+
 def _agent_failure_reason(error: AgentError) -> str:
     """Keep tunnel/connectivity failures distinct from invalid model output."""
 
+    if isinstance(error, AgentContextOverflowError):
+        return f"context_overflow: {error}"
     if isinstance(error, AgentUnavailableError):
         return f"llm_unavailable: {error}"
     if isinstance(error, AgentResponseError):
