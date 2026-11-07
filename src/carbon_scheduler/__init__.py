@@ -5,4 +5,4 @@ regional DeathStarBench stamps. It does not implement live workload or data
 migration between Azure regions.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"

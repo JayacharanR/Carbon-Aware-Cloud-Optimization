@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "carbon-scheduler"
-version = "0.1.0"
+version = "1.0.0"
 description = "Trust-gated, carbon-intensity-aware benchmark-session scheduler"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"

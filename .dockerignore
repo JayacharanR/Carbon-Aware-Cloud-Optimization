@@ -1,0 +1,16 @@
+**
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+!src/**
+!scripts/
+!scripts/**
+!deploy/
+!deploy/controller/
+!deploy/controller/Dockerfile
+!deploy/deathstarbench/
+!deploy/deathstarbench/**
+**/__pycache__/
+**/*.pyc
