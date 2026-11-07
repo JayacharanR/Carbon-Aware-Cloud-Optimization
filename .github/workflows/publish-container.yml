@@ -71,9 +71,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-          docker push "${IMAGE}:${VERSION}"
+          push_image() {
+            for attempt in 1 2 3; do
+              if docker push "$1"; then
+                return 0
+              fi
+              if [ "$attempt" -lt 3 ]; then
+                sleep "$((attempt * 5))"
+              fi
+            done
+            return 1
+          }
+          push_image "${IMAGE}:${VERSION}"
           docker tag "${IMAGE}:${VERSION}" "${IMAGE}:${MAJOR}"
           docker tag "${IMAGE}:${VERSION}" "${IMAGE}:latest"
-          docker push "${IMAGE}:${MAJOR}"
-          docker push "${IMAGE}:latest"
+          push_image "${IMAGE}:${MAJOR}"
+          push_image "${IMAGE}:latest"
+          for tag in "${VERSION}" "${MAJOR}" latest; do
+            docker manifest inspect "${IMAGE}:${tag}" > "/tmp/manifest-${tag}.json"
+          done
+          gh api "/users/${GITHUB_REPOSITORY_OWNER}/packages/container/${IMAGE##*/}" --jq '{name, visibility, html_url}' || true
           printf '### Published container\n\n`docker pull %s:%s`\n' "$IMAGE" "$VERSION" >> "$GITHUB_STEP_SUMMARY"
