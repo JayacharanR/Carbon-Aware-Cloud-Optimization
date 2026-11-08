@@ -57,7 +57,7 @@ flowchart TD
 
     subgraph S4 [4. Dual-Layer Trust Gate]
         Rails{Proposal Checks<br/>Schema, IDs, Model Feasibility,<br/>Window, Availability, Regret}
-        Scorer{R2 Evidence Score<br/>(Faithfulness + Context Precision)/2 >= 0.60}
+        Scorer{"R2 Evidence Score<br/>(Faithfulness + Context Precision)/2 >= 0.60"}
     end
 
     subgraph S5 [5. Fallback Engine]
@@ -88,9 +88,9 @@ flowchart TD
 
     Rails -- All Rails Pass --> Scorer
     Rails -- Rail Breach Detected --> MILP
-    Scorer -- Score >= 0.60 (Accepted) --> AKS1
-    Scorer -- Score >= 0.60 (Accepted) --> AKS2
-    Scorer -- Score < 0.60 (Fail-Closed) --> MILP
+    Scorer -->|"Score >= 0.60 (Accepted)"| AKS1
+    Scorer -->|"Score >= 0.60 (Accepted)"| AKS2
+    Scorer -->|"Score < 0.60 (Fail-Closed)"| MILP
 
     MILP --> AKS1
     MILP --> AKS2
