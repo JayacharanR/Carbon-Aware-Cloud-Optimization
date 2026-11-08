@@ -1,5 +1,7 @@
 # Carbon-Aware Cloud Optimization: Multi-Region Trust-Gated Scheduler
 
+[![CI](https://github.com/JayacharanR/Carbon-Aware-Cloud-Optimization/actions/workflows/ci.yml/badge.svg)](https://github.com/JayacharanR/Carbon-Aware-Cloud-Optimization/actions/workflows/ci.yml)
+
 This scheduler chooses a region and start time for a DeathStarBench benchmark session on two pre-provisioned Azure Kubernetes Service (AKS) clusters. A local Llama-3 proposer suggests an action; deterministic admission checks compare it with an exact feasible-candidate reference. Electricity Maps supplies live average carbon intensity, a manifest-derived service inventory supplies permitted services, and every decision is recorded with input hashes. The paper evaluates the checks, their limitations and their cost.
 
 ---
