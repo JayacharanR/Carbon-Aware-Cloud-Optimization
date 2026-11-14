@@ -1,288 +1,536 @@
 /**
- * Main Application Controller for Carbon-Aware Cloud Showcase
- * v2.0 — live carbon data pipeline from /api/live-carbon
+ * Dashboard controller: the single source of truth for what the page says.
+ *
+ *   LIVE        /api/live-carbon and /api/cluster-status, polled from the server
+ *   LIVE RUN    /api/cycle: a real scheduling cycle started from this page
+ *               (real Llama-3 proposal, gate v2.1, real Jobs on AKS)
+ *   SIMULATION  the decision walkthrough and the gate sandbox
+ *   RECORDED    web/data/evidence.json (rendered by metrics-view.js)
+ *
+ * The animation shows where the workload really is: the cluster running this
+ * page's current cycle, else the cluster of the last real cycle.
  */
 
-// ---------------------------------------------------------------------------
-// Live Carbon Poller — fetches /api/live-carbon every 60 seconds
-// and drives the traffic animation from real Electricity Maps data.
-// ---------------------------------------------------------------------------
-class LiveCarbonPoller {
-  /**
-   * @param {TrafficDirectorAnimation} anim - The traffic animation instance
-   * @param {number} intervalMs - Polling interval in milliseconds (default 60s)
-   */
-  constructor(anim, intervalMs = 60000) {
-    this.anim = anim;
-    this.intervalMs = intervalMs;
-    this._timer = null;
-    this._lastDecidedRegion = null;
+const SAMPLE_CARBON = { eastus2: 325, westus2: 148 };  // used only when live data are unavailable, and labelled so
+const ACTIVE_PHASES = ['starting', 'capturing', 'deciding', 'resetting', 'benchmarking', 'stopping'];
+const REGION_OF_CLUSTER = { 'aks-primary-eastus2': 'eastus2', 'aks-secondary-westus2': 'westus2' };
 
-    // Track cumulative carbon saved — seeded from 0, grows from real difference
-    this.cumulativeCarbonSavedGCO2 = 0;
-    this._savingsTimer = null;
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d) ? '—' : `${d.toISOString().substring(11, 16)} UTC`;
+}
+
+function fmtTimeSec(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d) ? '—' : d.toISOString().substring(11, 19);
+}
+
+function fmtAge(seconds) {
+  if (seconds == null) return '';
+  if (seconds < 90) return 'just now';
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min ago`;
+  return `${(seconds / 3600).toFixed(1)} h ago`;
+}
+
+class DashboardController {
+  constructor(anim) {
+    this.anim = anim;
+    this.live = null;        // last /api/live-carbon response
+    this.liveError = null;   // fetch failure (server unreachable)
+    this.cluster = null;     // last /api/cluster-status response
+    this.cycle = null;       // last /api/cycle response
+    this.cycleError = null;
+    this.listeners = [];
+    this.controlBusy = false;
+    this.actionError = null;
   }
+
+  onChange(fn) { this.listeners.push(fn); }
 
   start() {
-    // Fetch immediately on page load, then on interval
-    this._fetchAndApply();
-    this._timer = setInterval(() => this._fetchAndApply(), this.intervalMs);
-    // Update cumulative savings counter every second
-    this._savingsTimer = setInterval(() => this._tickSavings(), 1000);
+    this.pollLive();
+    this.pollCluster();
+    this.pollCycle();
+    setInterval(() => this.pollCluster(), 60000);
+    setInterval(() => this.render(), 30000); // keep "x min ago" honest
   }
 
-  stop() {
-    clearInterval(this._timer);
-    clearInterval(this._savingsTimer);
-  }
-
-  async _fetchAndApply() {
+  async pollLive() {
+    clearTimeout(this._liveTimer);
     try {
-      const resp = await fetch('/api/live-carbon');
+      const resp = await fetch('/api/live-carbon', { cache: 'no-store' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-
-      const eastIntensity = data.eastus?.intensity ?? null;
-      const westIntensity = data.westus2?.intensity ?? null;
-      const updatedAt = data.eastus?.updated_at ?? data.last_poll_at ?? null;
-      const source = data.eastus?.source ?? 'live';
-
-      // Push live values into the animation engine (updates node labels, HUD)
-      this.anim.setLiveCarbonValues(eastIntensity, westIntensity, updatedAt, source);
-
-      // Auto-reroute decision driven by real carbon data:
-      // If westus2 intensity is meaningfully lower (>10% reduction), optimise.
-      // If they're similar (within 10%), fall back to baseline (eastus primary).
-      const decidedRegion = data.decided_region;
-      if (decidedRegion && decidedRegion !== this._lastDecidedRegion) {
-        this._lastDecidedRegion = decidedRegion;
-        const targetState = decidedRegion === 'westus2' ? 'optimized' : 'baseline';
-        this.anim.setRoute(targetState);
-
-        // Announce the live decision in the status banner
-        this._announceLiveDecision(decidedRegion, eastIntensity, westIntensity, data.carbon_reduction_pct);
-      }
-
-      // Sync the carbon-diff metric on the HUD
-      this.anim.updateHudState();
-
-      // Update the live carbon stats panel if present
-      this._updateLiveStatsPanel(data);
-
+      this.live = await resp.json();
+      this.liveError = null;
     } catch (err) {
-      console.warn('[LiveCarbonPoller] Failed to fetch /api/live-carbon:', err);
-      // Mark animation as degraded but don't crash
-      this.anim.liveCarbon.source = 'error';
+      this.liveError = `dashboard server unreachable (${err.message})`;
     }
+    this.render();
+    // Until the server has completed its first Electricity Maps poll (e.g. right after a restart), retry quickly.
+    const waiting = this.liveError || !this.live || !this.live.last_poll_at;
+    this._liveTimer = setTimeout(() => this.pollLive(), waiting ? 5000 : 60000);
   }
 
-  _announceLiveDecision(region, eastInt, westInt, reductionPct) {
-    const banner = document.getElementById('statusBannerMsg');
-    if (!banner) return;
-
-    if (region === 'westus2') {
-      const saving = (eastInt && westInt) ? `${Math.round(eastInt - westInt)} gCO₂/kWh saved` : '';
-      banner.innerHTML = `<span class="live-indicator">● LIVE DECISION</span> Electricity Maps data: PJM=${Math.round(eastInt || 0)} vs BPA=${Math.round(westInt || 0)} gCO₂/kWh. Scheduler routing to <strong>aks-secondary-westus2</strong>${saving ? ` — ${saving}` : ''}.`;
-    } else {
-      banner.innerHTML = `<span class="live-indicator crimson">● MONITORING</span> Carbon parity detected. Holding workload on <strong>aks-primary-eastus2</strong>. PJM=${Math.round(eastInt || 0)} gCO₂/kWh.`;
+  async pollCluster() {
+    try {
+      const resp = await fetch('/api/cluster-status', { cache: 'no-store' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      this.cluster = await resp.json();
+    } catch (err) {
+      this.cluster = { error: err.message };
     }
+    this.renderClusters();
   }
 
-  _updateLiveStatsPanel(data) {
-    // Update east intensity display
-    const eastEl = document.getElementById('liveEastIntensity');
-    if (eastEl && data.eastus?.intensity !== null) {
-      eastEl.textContent = `${Math.round(data.eastus.intensity)} gCO₂/kWh`;
+  async pollCycle() {
+    clearTimeout(this._cycleTimer);
+    try {
+      const resp = await fetch('/api/cycle', { cache: 'no-store' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      this.cycle = await resp.json();
+      this.cycleError = null;
+    } catch (err) {
+      this.cycleError = err.message;
     }
-    // Update west intensity display
-    const westEl = document.getElementById('liveWestIntensity');
-    if (westEl && data.westus2?.intensity !== null) {
-      westEl.textContent = `${Math.round(data.westus2.intensity)} gCO₂/kWh`;
-    }
-    // Update decided region indicator
-    const decisionEl = document.getElementById('liveDecisionRegion');
-    if (decisionEl && data.decided_region) {
-      decisionEl.textContent = data.decided_region === 'westus2' ? 'westus2 ✓' : 'eastus2 (baseline)';
-      decisionEl.style.color = data.decided_region === 'westus2' ? '#a8c0dd' : '#ff6b6b';
-    }
-    // Update carbon reduction badge
-    const reductionEl = document.getElementById('liveCarbonReduction');
-    if (reductionEl && data.carbon_reduction_pct !== null) {
-      reductionEl.textContent = data.carbon_reduction_pct > 0
-        ? `-${data.carbon_reduction_pct}%`
-        : '0% (parity)';
-    }
-    // Update last-poll timestamp
-    const pollEl = document.getElementById('liveLastPoll');
-    if (pollEl && data.last_poll_at) {
-      const d = new Date(data.last_poll_at);
-      pollEl.textContent = d.toLocaleTimeString();
-    }
+    this.render();
+    this._cycleTimer = setTimeout(() => this.pollCycle(), this.cycleActive() ? 3000 : 30000);
   }
 
-  _tickSavings() {
-    // Accumulate carbon savings every second based on real intensity difference
-    const eastInt = this.anim.liveCarbon.eastus;
-    const westInt = this.anim.liveCarbon.westus2;
-
-    if (this.anim.state === 'optimized' && eastInt !== null && westInt !== null) {
-      // Assume ~0.5 kW workload; savings per second = (east-west) * 0.5 kW / 3600 s
-      const gPerSecond = ((eastInt - westInt) * 0.5) / 3600;
-      if (gPerSecond > 0) {
-        this.cumulativeCarbonSavedGCO2 += gPerSecond;
+  async runCycle(scenario = null) {
+    if (this.controlBusy || this.cycleActive() || this.simulation?.enabled) return;
+    this.controlBusy = true;
+    this.actionError = null;
+    this.render();
+    const btn = document.getElementById('btnRunCycle');
+    btn.disabled = true;
+    document.getElementById('btnRunSpike').disabled = true;
+    try {
+      const resp = await fetch(`/api/cycle/run${scenario ? `?scenario=${scenario}` : ''}`, { method: 'POST' });
+      const body = await resp.json();
+      if (!resp.ok) {
+        throw new Error(body.reason || `HTTP ${resp.status}`);
       }
+      await this.pollCycle();
+    } catch (err) {
+      this.actionError = `Not started: ${err.message}`;
+    } finally {
+      this.controlBusy = false;
+      this.render();
+    }
+  }
+
+  async postControl(path) {
+    const response = await fetch(path, { method: 'POST' });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.reason || `HTTP ${response.status}`);
+    return body;
+  }
+
+  async stopCycle() {
+    if (this.controlBusy) return;
+    this.controlBusy = true;
+    this.actionError = null;
+    this.render();
+    try {
+      await this.postControl('/api/cycle/stop');
+      await this.pollCycle();
+    } catch (err) {
+      this.actionError = `Stop failed: ${err.message}`;
+    } finally {
+      this.controlBusy = false;
+      this.render();
+    }
+  }
+
+  async resetPage() {
+    if (this.controlBusy) return;
+    this.controlBusy = true;
+    this.actionError = null;
+    this.simulation.exit();
+    window.thinkingPanel?.close();
+    this.render();
+    try {
+      // Reset also cancels an active live cycle. Wait for Job cleanup before
+      // allowing reload to hide its state; never erase an incomplete stop.
+      await this.pollCycle();
+      if (this.cycleActive()) {
+        await this.postControl('/api/cycle/stop');
+        const deadline = Date.now() + 90000;
+        do {
+          await new Promise(resolve => setTimeout(resolve, 750));
+          await this.pollCycle();
+          if (this.cycleError) throw new Error(this.cycleError);
+          if (Date.now() > deadline) throw new Error('Stop is still in progress. Wait and retry reset.');
+        } while (this.cycleActive() || this.currentCycle()?.worker_active);
+      }
+      await this.postControl('/api/cycle/reset');
+      window.location.reload();
+    } catch (err) {
+      this.actionError = `Reset failed: ${err.message}`;
+      this.controlBusy = false;
+      this.render();
+    }
+  }
+
+  // ── Derived state ──────────────────────────────────────────────────────────
+
+  liveStatus() {
+    if (this.liveError || !this.live) return 'hold';
+    return this.live.status;
+  }
+
+  holdReason() {
+    if (this.liveError) return this.liveError;
+    if (!this.live) return 'waiting for the first poll';
+    return this.live.hold_reason;
+  }
+
+  /** Values the simulations should use, with their provenance. */
+  carbonInputs() {
+    const ok = this.liveStatus() !== 'hold';
+    const live = ok ? { eastus2: this.live.primary.intensity, westus2: this.live.secondary.intensity } : null;
+    const values = { ...(live || SAMPLE_CARBON) };
+    const ageHours = ok ? Math.max(this.live.primary.age_seconds || 0, this.live.secondary.age_seconds || 0) / 3600 : null;
+    return { values, live, ok, source: ok ? 'live' : 'sample', ageHours,
+      returnedZones: ok ? { eastus2: this.live.primary.zone_returned, westus2: this.live.secondary.zone_returned } : null,
+      observedAt: ok ? this.live.primary.observed_at : null, holdReason: ok ? null : this.holdReason() };
+  }
+
+  recommendation() {
+    const c = this.carbonInputs();
+    if (!c.ok) return null;
+    return c.values.westus2 < c.values.eastus2 ? 'westus2' : 'eastus2';
+  }
+
+  currentCycle() { return this.cycle ? this.cycle.current : null; }
+
+  cycleActive() {
+    const cur = this.currentCycle();
+    return !!cur && ACTIVE_PHASES.includes(cur.phase);
+  }
+
+  /** Last finished real cycle that placed a session on a cluster. */
+  lastPlacement() {
+    if (this.currentCycle()?.reset_at) return null;
+    const hist = (this.cycle && this.cycle.history) || [];
+    return hist.find(r => r.outcome === 'executed' && r.cluster) || null;
+  }
+
+  /** Where the workload really is: {region, cluster, kind, text, from}. */
+  placement() {
+    if (this.simulation?.enabled) return { region: this.simulation.region, kind: 'simulation' };
+    const cur = this.currentCycle();
+    if (this.cycleActive()) {
+      if (cur.phase === 'stopping') return { region: null, kind: 'deciding', text: 'stopping the live cycle and cleaning up its Jobs' };
+      if (cur.region) {
+        const moved = cur.previous_cluster && cur.previous_cluster !== cur.cluster ? cur.previous_cluster : null;
+        return { region: cur.region, cluster: cur.cluster, kind: 'running', from: moved,
+          text: cur.phase === 'benchmarking' ? 'wrk2 benchmark running' : 'fixture reset running' };
+      }
+      return { region: null, kind: 'deciding', text: cur.phase === 'capturing' ? 'capturing carbon data' : 'scheduler deciding' };
+    }
+    const last = this.lastPlacement();
+    if (last) {
+      return { region: REGION_OF_CLUSTER[last.cluster] || last.final_region, cluster: last.cluster, kind: 'last', text: '', receipt: last };
+    }
+    return { region: null, kind: 'none' };
+  }
+
+  // ── Rendering ──────────────────────────────────────────────────────────────
+
+  render() {
+    if (this.cycleActive() && this.simulation?.enabled) {
+      this.simulation.clearTimers();
+      this.simulation.enabled = false;
+      this.simulation.phase = 'idle';
+      this.simulation.events = [];
+    }
+    this.simulation?.render();
+    const c = this.carbonInputs();
+    const status = this.liveStatus();
+    const rec = this.recommendation();
+
+    // HUD intensities (plus the scenario value while a spike cycle runs)
+    const curSc = this.cycleActive() && this.currentCycle().scenario;
+    for (const [region, id] of [['eastus2', 'liveEastIntensity'], ['westus2', 'liveWestIntensity']]) {
+      const base = c.ok ? `${Math.round(c.live[region])} gCO₂/kWh` : 'unavailable';
+      document.getElementById(id).textContent = curSc && curSc.region === region ? `${base} · scenario ${Math.round(curSc.scenario_value)}` : base;
+    }
+    const sim = this.simulation;
+    this.anim.setCarbonLabels(sim?.enabled ? sim.values.eastus2 : c.ok ? c.values.eastus2 : null,
+      sim?.enabled ? sim.values.westus2 : c.ok ? c.values.westus2 : null,
+      sim?.enabled ? ' · SIM' : '', sim?.enabled ? ' · SIM' : '');
+    // Centre HUD
+    document.getElementById('hudRecommendation').textContent = sim?.enabled
+      ? sim.values.eastus2 === sim.values.westus2 ? 'Simulation: equal carbon'
+        : `Simulation: ${sim.values.eastus2 < sim.values.westus2 ? 'eastus2' : 'westus2'} is cleaner`
+      : c.ok ? `Lower-carbon region now: ${rec}` : 'HOLD · carbon data failed checks';
+
+    // Main banner (live carbon)
+    const banner = document.getElementById('statusBannerMsg');
+    if (status === 'hold') {
+      banner.innerHTML = `<span class="live-indicator crimson">● CARBON DATA UNAVAILABLE</span> ${escapeHtml(c.holdReason || '')}. With such inputs the scheduler holds: no new placement is made.`;
+    } else {
+      const p = this.live.primary, s = this.live.secondary;
+      const lead = status === 'degraded'
+        ? '<span class="live-indicator amber">● LIVE (previous observation)</span>'
+        : '<span class="live-indicator">● LIVE</span>';
+      const pct = this.live.reduction_pct;
+      banner.innerHTML = `${lead} Electricity Maps: PJM (eastus2) <strong>${Math.round(p.intensity)}</strong> vs BPAT (westus2) <strong>${Math.round(s.intensity)}</strong> gCO₂eq/kWh. Lower-carbon region now: <strong>${this.live.recommended_region}</strong>${pct > 0 ? ` (${pct}% lower intensity)` : ''}.${status === 'degraded' ? ` ${escapeHtml(this.live.hold_reason || '')}.` : ''}`;
     }
 
-    const countEl = document.getElementById('carbonSavedCounter');
-    if (countEl) {
-      const kg = this.cumulativeCarbonSavedGCO2 / 1000;
-      countEl.textContent = kg > 0.001 ? `${kg.toFixed(3)} kg CO₂` : '< 0.001 kg CO₂';
+    // Placement banner and animation: where the workload really is
+    const pl = this.placement();
+    const pb = document.getElementById('previewBannerMsg');
+    const note = document.getElementById('canvasNote');
+    const cur = this.currentCycle();
+    const sc = cur && this.cycleActive() ? cur.scenario : null;
+    const scText = sc ? ` <span class="tag tag-sim">SCENARIO</span> ${sc.region} spiked ${sc.live_value} → ${sc.scenario_value} gCO₂/kWh in the scheduler's input.` : '';
+    if (pl.kind === 'simulation') {
+      pb.innerHTML = `<span class="tag tag-sim">SIMULATION</span> ${escapeHtml(sim.events[sim.events.length - 1] || 'Reading carbon meters')}`;
+      note.innerHTML = `<span class="tag tag-sim">SIMULATION</span> Placement: ${pl.region} · no AKS execution`;
+    } else if (pl.kind === 'running') {
+      const what = pl.text.startsWith('wrk2')
+        ? 'wrk2 is sending compose-post requests (10 req/s) to this cluster now'
+        : 'the fixture reset is running on this cluster; the benchmark starts next';
+      const switched = pl.from ? `<strong class="state-warn">Switched</strong> from ${pl.from} to <strong>${pl.cluster}</strong>. ` : `Placed on <strong>${pl.cluster}</strong> (${pl.region}). `;
+      pb.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${switched}${what}.${scText}`;
+      note.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.from ? `switched ${pl.from} → ` : ''}${pl.cluster} · ${pl.text}`;
+    } else if (pl.kind === 'deciding') {
+      pb.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.text}; no Job has been created yet.${scText}`;
+      note.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.text}…`;
+    } else if (pl.kind === 'last') {
+      const r = pl.receipt;
+      const spikeNote = r.scenario ? ` <span class="tag tag-sim">SCENARIO</span> decided with ${r.scenario.region} spiked to ${r.scenario.scenario_value} gCO₂/kWh.` : '';
+      pb.innerHTML = `<span class="tag tag-live">LAST REAL PLACEMENT</span> <strong>${r.cluster}</strong> at ${fmtTime(r.dispatched_at)} (run <code>${r.run_id}</code>, ${r.decision_source === 'llm' ? 'LLM proposal admitted' : 'exact program decided'}): P95 ${r.p95_ms} ms, SLO ${r.slo_passed ? 'passed' : 'failed'}.${spikeNote}`;
+      note.innerHTML = `Flow to the last real placement · ${r.cluster}`;
+    } else {
+      pb.textContent = 'Ready for a new presentation run. Run a live cycle or use the adjustable carbon simulation.';
+      note.textContent = 'Waiting for a run';
+    }
+    this.anim.holding = !pl.region;
+    if (pl.region) this.anim.setRoute(pl.region === 'westus2' ? 'optimized' : 'baseline');
+    for (const [region, id] of [['eastus2', 'primaryJobState'], ['westus2', 'secondaryJobState']]) {
+      const el = document.getElementById(id);
+      if (pl.region === region && pl.kind === 'simulation') el.innerHTML = '<span class="tag tag-sim">SIMULATION</span> Workload placement';
+      else if (pl.region === region && pl.kind === 'running') el.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.text}`;
+      else if (pl.region === region && pl.kind === 'last') el.innerHTML = `Last real placement · ${fmtTime(pl.receipt.dispatched_at)}`;
+      else el.innerHTML = '';
     }
 
-    const evMilesEl = document.getElementById('evMilesEquivalent');
-    if (evMilesEl) {
-      // ~0.25 kg CO₂ per EV mile (EPA estimate)
-      const miles = this.cumulativeCarbonSavedGCO2 / 250;
-      evMilesEl.textContent = miles > 0 ? `${miles.toFixed(3)} mi` : '< 0.001 mi';
+    // Meta row
+    document.getElementById('carbonObservedAt').textContent = c.ok
+      ? `${fmtTime(this.live.primary.observed_at)} · ${fmtAge(this.live.primary.age_seconds)}`
+      : 'no valid observation';
+    document.getElementById('liveLastPoll').textContent = this.live && this.live.last_poll_at ? fmtTime(this.live.last_poll_at) : '—';
+    document.getElementById('liveCarbonReduction').textContent = c.ok
+      ? (this.live.reduction_pct > 0 ? `westus2 ${this.live.reduction_pct}% lower` : 'eastus2 equal or lower')
+      : '—';
+
+    // Carbon difference card
+    const delta = document.getElementById('deltaPerKwh');
+    if (c.ok) {
+      const d = c.live.eastus2 - c.live.westus2;
+      delta.textContent = d >= 0 ? `≈ ${Math.round(d)} g CO₂e less` : `≈ ${Math.round(-d)} g CO₂e more`;
+    } else {
+      delta.textContent = 'unavailable';
     }
+
+    this.renderCycle();
+    this.listeners.forEach(fn => fn(this));
+  }
+
+  renderCycle() {
+    const btn = document.getElementById('btnRunCycle');
+    const statusEl = document.getElementById('cycleStatus');
+    const cur = this.currentCycle();
+    const active = this.cycleActive();
+    const clusters = this.clusterSummary();
+    const ready = clusters.primary === 'ready' && clusters.secondary === 'ready';
+    const spikeBtn = document.getElementById('btnRunSpike');
+    btn.disabled = active || !ready || this.controlBusy || !!this.simulation?.enabled;
+    spikeBtn.disabled = btn.disabled;
+    const stop = document.getElementById('btnStopCycle');
+    stop.disabled = this.controlBusy || ((!active || cur?.phase === 'stopping') && cur?.phase !== 'cancel_failed');
+    stop.textContent = cur?.phase === 'cancel_failed' ? 'Retry force stop' : cur?.phase === 'stopping' ? 'Stopping live cycle…' : 'Force stop live cycle';
+    document.getElementById('btnResetPage').disabled = this.controlBusy;
+    btn.textContent = active ? '⏳ Live cycle running…' : '▶ Run live cycle';
+    btn.title = ready ? 'Runs the real scheduler and real benchmark Jobs on AKS' : 'Both AKS clusters must be ready';
+
+    // Stepper
+    const phase = cur ? cur.phase : 'idle';
+    const reached = new Set((cur && cur.events || []).map(e => e.phase));
+    document.querySelectorAll('#cycleSteps li').forEach(li => {
+      const step = li.dataset.step;
+      li.className = phase === step && active ? 'active' : reached.has(step) ? 'done' : '';
+    });
+
+    if (this.actionError) {
+      statusEl.innerHTML = `<span class="txt-hold">${escapeHtml(this.actionError)}</span>`;
+    } else if (this.cycleError) {
+      statusEl.innerHTML = `<span class="txt-hold">Cycle status unavailable:</span> ${escapeHtml(this.cycleError)}`;
+    } else if (!cur || phase === 'idle') {
+      statusEl.textContent = ready
+        ? 'No cycle is running. Both clusters are ready.'
+        : `Live cycles need both clusters ready (eastus2 ${clusters.primary}, westus2 ${clusters.secondary}).`;
+    } else if (active) {
+      const last = cur.events && cur.events.length ? cur.events[cur.events.length - 1].text : 'starting';
+      statusEl.innerHTML = `<span class="live-dot"></span> <strong>${escapeHtml(cur.run_id)}</strong> · ${escapeHtml(last)}`;
+    } else if (phase === 'failed' || phase === 'cancel_failed' || phase === 'cancelled') {
+      statusEl.innerHTML = `<span class="txt-hold">Cycle ${escapeHtml(cur.run_id)} ${phase.replace('_', ' ')}:</span> ${escapeHtml(cur.events[cur.events.length - 1].text)}`;
+    } else {
+      statusEl.innerHTML = `Cycle <strong>${escapeHtml(cur.run_id)}</strong> finished at ${fmtTime(cur.finished_at)}.`;
+    }
+
+    document.getElementById('cycleEvents').innerHTML = (cur && cur.events || []).map(e =>
+      `<li><span class="ev-time">${fmtTimeSec(e.at)}</span> ${escapeHtml(e.text)}</li>`).join('');
+
+    // Receipt of the current (or most recent) finished cycle
+    const hist = (this.cycle && this.cycle.history) || [];
+    const receipt = (cur && cur.receipt) || (!active && !cur?.reset_at && !['cancelled', 'cancel_failed'].includes(phase) && hist[0]) || null;
+    const box = document.getElementById('cycleReceipt');
+    box.hidden = !(receipt && !active);
+    if (!box.hidden) box.innerHTML = this.receiptHtml(receipt);
+
+    // History
+    const histEl = document.getElementById('cycleHistory');
+    histEl.hidden = hist.length === 0;
+    histEl.innerHTML = hist.length ? `
+      <div class="cycle-history-title">Live cycles run from this page (receipts in <code>artifacts/web-cycles/</code>)</div>
+      <div class="policy-table-wrapper"><table class="policy-table compact">
+        <thead><tr><th>Dispatched (UTC)</th><th>Run</th><th>Carbon input</th><th>LLM proposed</th><th>Gate v2.1</th><th>Placed on</th><th>P95</th><th>Errors</th><th>SLO</th></tr></thead>
+        <tbody>${hist.map(r => `<tr>
+          <td>${r.dispatched_at ? r.dispatched_at.substring(0, 16).replace('T', ' ') : '—'}</td>
+          <td><code>${escapeHtml(r.run_id)}</code></td>
+          <td>${r.scenario ? `<span class="tag tag-sim">SPIKE</span> ${r.scenario.region} ×${r.scenario.factor}` : 'live'}</td>
+          <td>${r.llm_proposed_region || '—'}</td>
+          <td>${r.gate_passed ? 'admitted' : `rejected (${r.gate_failed_checks.length ? r.gate_failed_checks.join(', ') : 'evidence score'})`}</td>
+          <td>${r.cluster || r.outcome}</td>
+          <td>${r.p95_ms == null ? '—' : `${r.p95_ms} ms`}</td>
+          <td>${r.error_rate == null ? '—' : `${(r.error_rate * 100).toFixed(2)}%`}</td>
+          <td>${r.slo_passed == null ? '—' : r.slo_passed ? 'passed' : 'failed'}</td></tr>`).join('')}</tbody>
+      </table></div>` : '';
+  }
+
+  receiptHtml(r) {
+    const ci = (reg) => (r.carbon[reg] && r.carbon[reg].intensity != null ? `${Math.round(r.carbon[reg].intensity)} gCO₂/kWh` : '—');
+    const regret = r.carbon_regret != null && r.gate_failed_checks.includes('carbon_regret')
+      ? ` (regret +${(r.carbon_regret * 100).toFixed(0)}%, limit 5%)` : '';
+    const scoreText = r.evidence_score != null
+      ? `evidence score (F ${r.faithfulness.toFixed(2)} + CP ${r.context_precision.toFixed(2)})/2 = ${r.evidence_score.toFixed(2)}` : 'evidence score';
+    let gate;
+    if (r.gate_passed) gate = `<span class="state-ok">admitted</span> · all ${r.gate_checks_total} checks passed${r.evidence_score != null ? `, ${scoreText} ≥ 0.6` : ''}`;
+    else if (r.gate_failed_checks.length) gate = `<span class="state-warn">rejected</span> by ${escapeHtml(r.gate_failed_checks.join(', '))}${regret}`;
+    else if (r.llm_proposed_region) gate = `<span class="state-warn">rejected</span> by the ${scoreText} &lt; 0.6; all ${r.gate_checks_total} hard checks passed`;
+    else gate = `<span class="state-warn">no admissible proposal</span>${r.gate_failure_reason ? ` (${escapeHtml(r.gate_failure_reason)})` : ''}`;
+    const rows = [
+      ...(r.scenario ? [['Scenario', `<span class="tag tag-sim">SPIKE</span> ${r.scenario.region} ${r.scenario.live_value} → ${r.scenario.scenario_value} gCO₂/kWh (×${r.scenario.factor}, input only)`]] : []),
+      [r.scenario ? 'Carbon seen by the scheduler' : 'Carbon captured', `eastus2 ${ci('eastus2')} · westus2 ${ci('westus2')}`],
+      ['Llama-3 8B proposed', r.llm_proposed_region || 'no valid proposal'],
+      ['Gate v2.1', gate],
+      ['Decision', r.decision_source === 'llm' ? 'LLM proposal' : r.decision_source === 'milp' ? 'exact program (fallback)' : escapeHtml(r.decision_source || '—')],
+      ['Placed on', r.cluster ? `<strong>${r.cluster}</strong>` : escapeHtml(r.outcome)],
+      ['Benchmark Job', r.job_name ? `<code>${escapeHtml(r.job_name)}</code>` : '—'],
+      ['Dispatched → completed', `${fmtTimeSec(r.dispatched_at)} → ${fmtTimeSec(r.completed_at)} UTC`],
+      ['Measured P95 · errors', r.p95_ms == null ? '—' : `${r.p95_ms} ms · ${(r.error_rate * 100).toFixed(2)}% (SLO 500 ms, 5%)`],
+      ['SLO', r.slo_passed == null ? '—' : r.slo_passed ? '<span class="state-ok">passed</span>' : '<span class="txt-hold">failed</span>'],
+    ];
+    if (r.execution_failure_reason) rows.push(['Execution', `<span class="txt-hold">${escapeHtml(r.execution_failure_reason)}</span>`]);
+    return `
+      <div class="cycle-receipt-grid">
+        <div>${rows.map(([k, v]) => `<div class="metadata-row"><span class="meta-key">${k}</span><span class="meta-val">${v}</span></div>`).join('')}</div>
+        ${r.log_excerpt && r.log_excerpt.length ? `<pre class="cycle-log">${escapeHtml(r.log_excerpt.join('\n'))}</pre>` : ''}
+      </div>`;
+  }
+
+  renderClusters() {
+    const describe = (s) => {
+      if (!s) return { text: 'checking…', cls: 'unknown', title: '' };
+      if (s.state === 'ready') return { text: `ready · ${s.running}/${s.total} pods`, cls: 'ok', title: 'All pods running and ready' };
+      if (s.state === 'degraded') return { text: `degraded · ${s.running}/${s.total} pods ready`, cls: 'warn', title: s.reason || '' };
+      if (s.state === 'empty') return { text: 'no pods', cls: 'warn', title: s.reason || '' };
+      if (s.state === 'unreachable') return { text: 'unreachable', cls: 'down', title: `${s.reason || ''}${s.detail ? `\n${s.detail}` : ''}` };
+      return { text: 'unknown', cls: 'unknown', title: s.reason || '' };
+    };
+    const st = this.cluster || {};
+    const failed = !!st.error;
+    for (const [key, ctx, headerId, hudId, cardId, dotId] of [
+      ['primary', 'aks-primary-eastus2', 'headerClusterPrimary', 'metaPrimaryPods', 'metaPrimaryPodsCard', 'primaryHudDot'],
+      ['secondary', 'aks-secondary-westus2', 'headerClusterSecondary', 'metaSecondaryPods', 'metaSecondaryPodsCard', 'secondaryHudDot'],
+    ]) {
+      const d = failed ? { text: 'status check failed', cls: 'unknown', title: st.error } : describe(st[key]);
+      const header = document.getElementById(headerId);
+      header.innerHTML = `<span class="pulse-dot ${d.cls}"></span><span class="badge-region">${REGION_OF_CLUSTER[ctx]}</span><span class="badge-state"> · ${d.text}</span>`;
+      header.title = `${ctx}: ${d.title || 'live kubectl check from the web host'}`;
+      for (const id of [hudId, cardId]) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const reason = st[key] && st[key].reason && id === cardId ? ` — ${st[key].reason}` : '';
+        el.textContent = `${d.text}${reason}`;
+        el.className = `meta-val state-${d.cls}`;
+        el.title = d.title || '';
+      }
+      const dot = document.getElementById(dotId);
+      if (dot) dot.className = `pulse-dot ${d.cls}`;
+    }
+    const ts = document.getElementById('metaClusterTimestamp');
+    if (ts) ts.textContent = st.checked_at ? fmtTime(st.checked_at) : '—';
+    this.renderCycle();
+    this.listeners.forEach(fn => fn(this));
+  }
+
+  clusterSummary() {
+    const st = this.cluster || {};
+    const one = (k) => (st[k] ? st[k].state : 'unknown');
+    return { primary: one('primary'), secondary: one('secondary'),
+      reason: (st.primary && st.primary.reason) || (st.secondary && st.secondary.reason) || st.error || null };
   }
 }
 
+function escapeHtml(text) {
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-// ---------------------------------------------------------------------------
-// DOMContentLoaded — wire everything together
-// ---------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize Traffic Particle Animation Engine
   const anim = new TrafficDirectorAnimation('trafficCanvas');
+  const dashboard = new DashboardController(anim);
+  dashboard.simulation = new PlacementSimulation(dashboard);
+  const walkthrough = new AIThinkingPanel(dashboard);
+  window.dashboard = dashboard;
+  window.thinkingPanel = walkthrough;
 
-  // 2. Initialize Metrics and Trust Gate Controller
-  const metrics = new MetricsViewController();
+  new MetricsViewController(dashboard);
+  new GraphTopologyViewer('dagSvg', walkthrough);
 
-  // 3. Initialize 28-Microservice Dependency DAG
-  const dag = new GraphTopologyViewer('dagSvg');
-
-  // 4. Initialize AI Thinking Panel
-  const thinkingPanel = new AIThinkingPanel();
-
-  // Expose global singletons for cross-component access
-  window.trafficAnim = anim;
-  window.thinkingPanel = thinkingPanel;
-  window.aiThinkingPanel = thinkingPanel;
-  window.dagViewer = dag;
-
-  // 5. Start Live Carbon Poller — this drives rerouting from real Electricity Maps data
-  const carbonPoller = new LiveCarbonPoller(anim, 60000);
-  carbonPoller.thinkingPanel = thinkingPanel; // Give poller access so it can sync live values
-  carbonPoller.start();
-  window.carbonPoller = carbonPoller;
-
-  // 6. Wire HUD node click → AI Thinking Panel
-  const primaryHud   = document.getElementById('primaryClusterHud');
-  const secondaryHud = document.getElementById('secondaryClusterHud');
-
-  if (primaryHud) {
-    primaryHud.addEventListener('click', () => {
-      thinkingPanel.setLiveCarbon(anim.liveCarbon.eastus, anim.liveCarbon.westus2);
-      thinkingPanel.trigger('primary');
-      // Also trigger the routing animation
-      anim.setRoute('baseline');
-      setTimeout(() => anim.setRoute('optimized'), 3200);
+  const openFromHud = (hud, source) => {
+    if (!hud) return;
+    const open = () => walkthrough.trigger(source);
+    hud.addEventListener('click', (e) => {
+      // Card text opens the walkthrough. Sliders and the explicit child
+      // button keep their own actions without also opening the card.
+      if (e.target !== hud && e.target.closest('.carbon-meter, button, input, select, a')) return;
+      open();
     });
-  }
-
-  if (secondaryHud) {
-    secondaryHud.addEventListener('click', () => {
-      thinkingPanel.setLiveCarbon(anim.liveCarbon.eastus, anim.liveCarbon.westus2);
-      thinkingPanel.trigger('secondary');
-      // Also trigger the routing animation
-      anim.setRoute('baseline');
-      setTimeout(() => anim.setRoute('optimized'), 3200);
-    });
-  }
-
-  // 7. Wire Interactive Toolbar Controls (manual overrides)
-  const btnReroute = document.getElementById('btnTriggerReroute');
-  const btnBaseline = document.getElementById('btnResetBaseline');
-  const btnGridSurge = document.getElementById('btnSimulateGridSurge');
-  const flowSpeedSelect = document.getElementById('flowSpeedSelect');
-  const autoDemoToggle = document.getElementById('autoDemoToggle');
-
-  if (btnReroute) {
-    btnReroute.addEventListener('click', () => {
-      anim.setRoute('optimized');
-      pulseButton(btnReroute);
-    });
-  }
-
-  if (btnBaseline) {
-    btnBaseline.addEventListener('click', () => {
-      anim.setRoute('baseline');
-      pulseButton(btnBaseline);
-    });
-  }
-
-  if (btnGridSurge) {
-    btnGridSurge.addEventListener('click', async () => {
-      // Show simulated grid surge then let live data decide route
-      const banner = document.getElementById('statusBannerMsg');
-      if (banner) {
-        const eastInt = anim.liveCarbon.eastus;
-        const spiked = eastInt ? Math.round(eastInt * 1.22) : 685;
-        banner.innerHTML = `<span class="live-indicator crimson">⚡ GRID SURGE SIMULATED!</span> PJM East US 2 spiked to <strong>${spiked} gCO₂eq/kWh</strong>. Trust Gate initiating automated cross-region migration…`;
-      }
-      setTimeout(() => {
-        anim.setRoute('optimized');
-      }, 1200);
-    });
-  }
-
-  if (flowSpeedSelect) {
-    flowSpeedSelect.addEventListener('change', (e) => {
-      anim.flowSpeed = parseFloat(e.target.value);
-    });
-  }
-
-  // Auto-demo toggle: when checked, allow natural live-data-driven switching.
-  // When unchecked, stop the auto interval (manual control only).
-  let autoTimer = null;
-  function startAutoDemo() {
-    // In live mode, auto-demo just reinforces the live decision every 20s
-    autoTimer = setInterval(() => {
-      const eastInt = anim.liveCarbon.eastus;
-      const westInt = anim.liveCarbon.westus2;
-      if (eastInt !== null && westInt !== null) {
-        // Let live data drive
-        if (westInt < eastInt * 0.9) {
-          anim.setRoute('optimized');
-        } else {
-          anim.setRoute('baseline');
-        }
-      } else {
-        // If live data not yet loaded, toggle for demo purposes
-        if (anim.state === 'baseline') {
-          anim.setRoute('optimized');
-        } else {
-          anim.setRoute('baseline');
-        }
-      }
-    }, 20000);
-  }
-
-  if (autoDemoToggle) {
-    autoDemoToggle.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        startAutoDemo();
-      } else {
-        clearInterval(autoTimer);
+    hud.addEventListener('keydown', (e) => {
+      if (e.target === hud && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault(); open();
       }
     });
-    // Start auto demo by default for interactive presentation
-    startAutoDemo();
-  }
+  };
+  openFromHud(document.getElementById('primaryClusterHud'), 'primary');
+  openFromHud(document.getElementById('secondaryClusterHud'), 'secondary');
+  openFromHud(document.getElementById('primaryWalkthrough'), 'primary');
+  openFromHud(document.getElementById('secondaryWalkthrough'), 'secondary');
 
-  function pulseButton(btn) {
-    btn.style.transform = 'scale(0.96)';
-    setTimeout(() => (btn.style.transform = ''), 150);
-  }
+  document.getElementById('btnRunCycle').addEventListener('click', () => dashboard.runCycle());
+  document.getElementById('btnRunSpike').addEventListener('click', () => dashboard.runCycle('spike'));
+  document.getElementById('btnStopCycle').addEventListener('click', () => dashboard.stopCycle());
+  document.getElementById('btnResetPage').addEventListener('click', () => dashboard.resetPage());
+  document.getElementById('flowSpeedSelect').addEventListener('change', (e) => {
+    anim.flowSpeed = parseFloat(e.target.value);
+  });
+
+  dashboard.start();
 });

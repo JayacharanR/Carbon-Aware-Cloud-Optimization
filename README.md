@@ -10,7 +10,7 @@ This scheduler chooses a region and start time for a DeathStarBench benchmark se
 
 ![Platform Demo Walkthrough](docs/assets/dashboard_demo.webp)
 
-*Figure 1: Dashboard demonstration. The animated topology, reasoning text and legacy five-component score are presentation features; the experiment receipts are the evidence for measured scheduler behaviour.*
+*Figure 1: Dashboard demonstration, recorded before the v3.0 dashboard. It shows the older page, including the withdrawn September pilot figures and the legacy five-component score. The current page separates live, recorded and simulated content (see below); the experiment receipts are the evidence for measured scheduler behaviour.*
 
 Direct video link: [Download Full-Resolution Demonstration (MP4)](docs/assets/dashboard_demo.mp4)
 
@@ -181,14 +181,25 @@ Both faults are fixed (`CARBON_PROVIDER=zone`; `LUA_PATH`/`LUA_CPATH` in `deploy
 
 ---
 
-## Interactive Operator Dashboard (`web/`)
+## Showcase Dashboard (`web/`)
 
-A standalone Glassmorphism web platform is provided in `web/` to monitor infrastructure, inspect live telemetry, and test adversarial scenarios:
+`web/server.py` serves a single page. Every panel carries one of three labels, and the page never presents one kind as another:
 
-- **Live Carbon Poller Daemon:** Polls Electricity Maps every 5 minutes in a background Python thread, updating the real-time ticker and the HTML5 Canvas particle rerouting animation.
-- **Live Cluster Status API:** Executes non-blocking `kubectl get pods -n benchmark` across both AKS contexts to display active pod ratios (e.g., 27/28 running on each cluster; the extra pod is the completed seed Job). Cluster contexts, regions, and Electricity Maps zones come from `.env` (`TARGET_*_KUBE_CONTEXT`, `AZURE_*_REGION`, `ELECTRICITY_MAPS_ZONE_PRIMARY/SECONDARY`).
-- **Adversarial Hallucination Simulator:** Demonstrates the legacy score and fallback with adjustable sliders; the NeMo library is not invoked by the scheduler. When trust drops below 0.60, the UI immediately flips to `FAIL-CLOSED (MILP Fallback Triggered)` to show safety gating in action.
-- **Service Explorer:** Interactive visualisation of the DeathStarBench inventory with node-click inspections and real-time AI decision-step logs.
+- **LIVE.** `/api/live-carbon` polls Electricity Maps (`carbon-intensity/latest`) every 5 minutes for US-MIDA-PJM (eastus2) and US-NW-BPAT (westus2). It applies the same checks as gate v2.1: the returned zone must be the requested one, and the observation must be at most 2 h old. The page shows the data hour and the poll time separately. If either check fails, or the key is missing, the page shows a hold with the reason, not a recommendation. The "lower-carbon region now" line is a comparison of the two values, not a scheduler decision, and nothing is deployed. `/api/cluster-status` runs `kubectl get pods -n benchmark` against both contexts in parallel (cached for 30 s). It reports ready, degraded, empty or unreachable with the reason; a stopped cluster shows as "unreachable".
+- **RECORDED.** `web/data/evidence.json` is built by `scripts/export_web_evidence.py` from the 12 October 2026 live session receipts and the offline key numbers. The page shows the session summary, the per-policy table, the offline claims with their keys, and the real wrk2 log of run `lvd-clean08-hybrid-v21`. Re-run the script after new experiments. The September 2026 pilot (`real-milp-pilot-v2`) and the old demo summary are withdrawn (see `artifacts/withdrawn-web-data/README.md`), and `/api/real-pilot` and `/api/summary` return HTTP 410.
+- **LIVE RUN.** *Run live cycle* (`POST /api/cycle/run`, `web/live_cycle.py`) runs one real scheduling cycle, on the same path as the 12 Oct session:
+  1. A fresh Electricity Maps capture.
+  2. `carbon-scheduler --mode hybrid --gate-profile v2.1` without `--dry-run`: Llama-3 8B proposes and gate v2.1 checks the proposal against the exact program.
+  3. The fixture-reset and wrk2 benchmark Jobs run on the chosen AKS cluster.
+
+  The page polls `GET /api/cycle`. It follows the Jobs as they appear on the cluster and moves the request-flow animation there. When the run finishes, it shows the receipt (proposal, gate verdict, measured P95, SLO). Receipts are kept in `artifacts/web-cycles/`. The animation always shows the cluster of the running or last real cycle. Both clusters must be ready, and only one cycle runs at a time; the decision window is 5 minutes, so a cycle takes about 2–8 minutes.
+
+  *Run with simulated spike* (`?scenario=spike`) runs the same real cycle with one change. Before the scheduler reads the capture, the currently cleaner region's intensity, current and forecast, is raised to at least 3× and above the other region; this is applied to a copy of the trace. The scheduler moves the workload to the other cluster, and the page shows that switch with the real Jobs and measurements. The receipt, the history table and the banners label the run SCENARIO. Both `carbon-trace.json` (live) and `carbon-trace-scenario.json` with `scenario.json` are kept.
+- **SIMULATION.** The decision walkthrough and the gate sandbox run in the browser. `web/js/gate-model.js` implements the gate v2.1 rule: data checks first (hold), then the regret check (≤ 5% of the exact program's optimum) and model feasibility (fallback), then the optional (F + CP)/2 ≥ 0.6 score. It is simplified to one decision slot, and it calls no model and deploys nothing. Topology clicks open the same walkthrough. The topology shows 17 of the 27 deployed services, with call paths from the DeathStarBench design.
+
+  The carbon meters beside the two clusters drive a separate placement demonstration. Select **Run simulation**, adjust either meter or **Swap carbon values**, and follow the input, comparison, switch and result steps. Both regions are assumed feasible in this demonstration. Equal intensities retain the current simulated placement. The animation and result are labelled SIMULATION; Electricity Maps readings and real receipts stay unchanged. **Exit simulation** returns the diagram to the real placement view.
+
+- **Presentation controls.** **Force stop live cycle** cancels the capture/scheduler process group and removes only the current run's labelled reset and benchmark Jobs, including their pods, in both clusters. It preserves the application deployments and saved receipts. Cleanup failures are displayed and can be retried; a new run or reset is blocked until cleanup succeeds. **Reset page** stops an active cycle, waits for cleanup, clears the current presentation state and reloads all page controls. Recorded results and saved run history remain available. Cancellation details are saved separately as `cancellation.json` rather than a successful benchmark receipt.
 
 ---
 
@@ -363,13 +374,17 @@ Carbon-Aware-Cloud-Optimization/
 |   |-- controller.py              # Background daemon running periodic scheduling loops
 |   `-- results.py                 # Results aggregator (cycles.jsonl -> summary.csv)
 |-- web/                           # Standalone operator dashboard & web server
-|   |-- server.py                  # Python HTTP server (Port 8080) & live carbon poller
-|   |-- index.html                 # Glassmorphism frontend interface
-|   |-- css/styles.css             # Vanilla CSS design system and animations
-|   |-- js/app.js                  # Particle animation engine & UI coordinator
-|   |-- js/metrics-view.js         # Live AKS telemetry cards & Trust Gate simulator
-|   |-- js/graph-topology.js       # Manifest service-inventory visualiser
-|   `-- js/ai-thinking.js          # AI decision reasoning step viewer
+|   |-- server.py                  # HTTP server: live carbon poller (age/zone checks), kubectl status
+|   |-- live_cycle.py              # Runs one real scheduling cycle on AKS for the page
+|   |-- index.html                 # Single page; LIVE / RECORDED / SIMULATION labels
+|   |-- data/evidence.json         # Recorded results (scripts/export_web_evidence.py)
+|   |-- css/styles.css             # Styles
+|   |-- js/app.js                  # Dashboard controller: live state, live cycles, placement animation
+|   |-- js/gate-model.js           # Browser model of the gate v2.1 decision rule
+|   |-- js/metrics-view.js         # Recorded-results cards and the gate sandbox
+|   |-- js/traffic-animation.js    # Request-flow animation to the cluster holding the workload
+|   |-- js/graph-topology.js       # Selected DeathStarBench services and call paths
+|   `-- js/ai-thinking.js          # Decision walkthrough (simulation)
 |-- config/                        # Experiment and policy configurations
 |   |-- experiment.yaml            # Main experiment specification
 |   |-- targets.yaml               # Multi-region cluster and benchmark templates

@@ -1,12 +1,15 @@
 /**
- * 28-Microservice Dependency DAG Topology Engine
- * Visualizes the DeathStarBench Social Network graph with interactive tier layout,
- * live node inspections, and dependency flow lines.
+ * Selected DeathStarBench Social Network services and their typical call paths.
+ *
+ * The 17 services and the edges are drawn from the DeathStarBench design, not
+ * discovered from the cluster; web/data/graph_data.json (the deployment
+ * inventory, 27 deployments, no edges) is used only for the count shown.
  */
 
 class GraphTopologyViewer {
-  constructor(svgId) {
+  constructor(svgId, walkthrough) {
     this.svg = document.getElementById(svgId);
+    this.walkthrough = walkthrough;
     if (!this.svg) return;
     this.selectedNode = null;
     this.init();
@@ -21,6 +24,11 @@ class GraphTopologyViewer {
       console.warn('Using default graph nodes:', e);
     }
     this.render(graphData);
+    const deployed = graphData && Array.isArray(graphData.nodes) ? graphData.nodes.length : null;
+    const note = document.getElementById('dagFootnote');
+    if (note) {
+      note.textContent = `${this.shownCount} of ${deployed ?? 'the'} deployed services shown. Call paths follow the DeathStarBench design; they are not discovered from the cluster.`;
+    }
   }
 
   render(graphData) {
@@ -38,6 +46,7 @@ class GraphTopologyViewer {
     ];
 
     const nodePositions = {};
+    this.shownCount = tiers.reduce((n, t) => n + t.nodes.length, 0);
 
     // Calculate Y positions per tier
     tiers.forEach(tier => {
@@ -169,25 +178,7 @@ class GraphTopologyViewer {
 
         this.showNodeInfo(name, pos.tier, true);
 
-        // Sync live carbon values if available
-        if (window.thinkingPanel) {
-          if (window.trafficAnim && window.trafficAnim.liveCarbon) {
-            window.thinkingPanel.setLiveCarbon(
-              window.trafficAnim.liveCarbon.eastus,
-              window.trafficAnim.liveCarbon.westus2
-            );
-          }
-          // Open the AI Thinking Panel with the microservice context
-          window.thinkingPanel.trigger(name, { tier: pos.tier });
-        }
-
-        // Also trigger the traffic rerouting animation
-        if (window.trafficAnim) {
-          window.trafficAnim.setRoute('baseline');
-          setTimeout(() => {
-            if (window.trafficAnim) window.trafficAnim.setRoute('optimized');
-          }, 3200);
-        }
+        if (this.walkthrough) this.walkthrough.trigger(name, { tier: pos.tier });
       });
 
       this.svg.appendChild(g);
@@ -198,9 +189,9 @@ class GraphTopologyViewer {
     const infoEl = document.getElementById('selectedNodeInfo');
     if (infoEl) {
       if (isClicked) {
-        infoEl.innerHTML = `⚡ Active Simulation: <strong style="color:#4caf82;">${name}</strong> | Tier: <strong>${tier}</strong> | Decision panel opened · Rerouting DeathStarBench traffic to clean region`;
+        infoEl.innerHTML = `<span class="tag tag-sim">SIMULATION</span> Walkthrough opened for <strong>${name}</strong> (${tier}). The scheduler places the whole regional copy of the application, so this service moves with the rest.`;
       } else {
-        infoEl.innerHTML = `Service: <strong>${name}</strong> | Tier: <strong>${tier}</strong> | Placement: <code>aks-primary-eastus2</code> / <code>aks-secondary-westus2</code> (Click node to simulate decision)`;
+        infoEl.innerHTML = `Service: <strong>${name}</strong> · ${tier} · deployed in both stamps (<code>aks-primary-eastus2</code>, <code>aks-secondary-westus2</code>). Click to open a decision walkthrough (simulation).`;
       }
     }
   }

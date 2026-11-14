@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carbon-Aware Cloud Optimization | Multi-Region Trust-Gated AKS Scheduler</title>
-  <meta name="description" content="Autonomous hybrid LLM + MILP scheduler with 5-factor Trust Gate optimizing DeathStarBench microservices across Azure AKS clusters using real-time grid carbon intensity.">
-  <link rel="stylesheet" href="css/styles.css?v=2.2">
+  <title>Carbon-Aware Cloud Scheduler | Fail-Closed Gate on Two Azure AKS Regions</title>
+  <meta name="description" content="Live grid carbon intensity for Azure East US 2 and West US 2, recorded results of a fail-closed scheduling gate (v2.1) on two AKS clusters, and an interactive simulation of its decision rule.">
+  <link rel="stylesheet" href="css/styles.css?v=4.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23778DA9'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
   <header class="header-bar">
     <div class="container header-container">
       <div class="brand-group">
@@ -21,46 +20,44 @@
         </div>
         <div class="brand-text">
           <h1>Carbon-Aware Cloud Scheduler</h1>
-          <span class="brand-tagline">Azure Multi-Region · Trust-Gated Hybrid AI</span>
+          <span class="brand-tagline">Two Azure AKS regions · fail-closed gate v2.1</span>
         </div>
       </div>
 
       <div class="header-status-group">
-        <div class="status-badge">
-          <span class="pulse-dot"></span>
-          <span>aks-primary-eastus2 (Ready)</span>
+        <div class="status-badge" id="headerClusterPrimary" title="Live kubectl check from the web host">
+          <span class="pulse-dot unknown"></span>
+          <span class="badge-region">eastus2</span><span class="badge-state"> · checking…</span>
         </div>
-        <div class="status-badge">
-          <span class="pulse-dot"></span>
-          <span>aks-secondary-westus2 (Ready)</span>
+        <div class="status-badge" id="headerClusterSecondary" title="Live kubectl check from the web host">
+          <span class="pulse-dot unknown"></span>
+          <span class="badge-region">westus2</span><span class="badge-state"> · checking…</span>
         </div>
-        <button id="btnTriggerReroute" class="btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="13 17 18 12 13 7"></polyline>
-            <polyline points="6 17 11 12 6 7"></polyline>
-          </svg>
-          Reroute to Clean Region
-        </button>
+        <a href="#recorded" class="btn-primary header-link">Recorded results</a>
+        <a href="https://github.com/JayacharanR/Carbon-Aware-Cloud-Optimization" class="btn-secondary header-link github-link"
+           target="_blank" rel="noopener noreferrer" title="Source code on GitHub">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span class="gh-text">GitHub</span>
+        </a>
       </div>
     </div>
   </header>
 
-  <!-- Main Showcase Container -->
   <main class="container">
-    
-    <!-- Hero Intro -->
+
+    <!-- ===================================================== HERO -->
     <section class="hero-section">
       <div class="hero-intro">
         <div class="hero-badge-pill">
-          <span>● Live Multi-Region Microservice Telemetry</span>
+          <span class="tag tag-live">LIVE</span> carbon signal · <span class="tag tag-live">LIVE RUN</span> real placement on AKS · <span class="tag tag-recorded">RECORDED</span> results
         </div>
-        <h2 class="hero-title">Real-Time Carbon-Aware Traffic Director</h2>
+        <h2 class="hero-title">Carbon-Aware Placement with a Fail-Closed Gate</h2>
         <p class="hero-description">
-          A hybrid scheduling system combining <strong>LLM cognitive reasoning</strong> with <strong>PuLP MILP mathematical guarantees</strong>, protected by a 5-component fail-closed Trust Gate to dynamically route DeathStarBench microservices to the cleanest power grid.
+          An untrusted proposer, here Llama-3 8B, may suggest a placement. Gate v2.1 admits a proposal only if it is feasible on the scheduler's own model,
+          within 5% of the carbon-optimal choice, and made on carbon data that pass age and identity checks. Otherwise the scheduler uses the optimal placement, or holds.
         </p>
       </div>
 
-      <!-- Fluid Traffic Animation Card -->
       <div class="traffic-orchestration-card">
         <div class="card-top-bar">
           <div class="card-title-group">
@@ -68,352 +65,322 @@
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 14 14"></polyline>
             </svg>
-            <h2>Cross-Region Workload Flow Director</h2>
+            <h2>Live Carbon Signal &amp; Workload Placement</h2>
           </div>
 
           <div class="controls-toolbar">
-            <div class="pill-toggle">
-              <button id="btnResetBaseline" class="pill-btn active">East US 2 (Baseline)</button>
-              <button id="btnTriggerReroute2" class="pill-btn" onclick="document.getElementById('btnTriggerReroute').click()">West US 2 (Clean)</button>
-            </div>
-            <button id="btnSimulateGridSurge" class="btn-secondary" title="Simulate carbon intensity spike in PJM grid">
-              ⚡ Simulate Grid Spike
+            <button id="btnRunCycle" class="btn-primary" title="Runs the real scheduler and real benchmark Jobs on AKS">
+              ▶ Run live cycle
             </button>
-            <label style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--c-text-muted); display: flex; align-items: center; gap: 6px;">
+            <button id="btnRunSpike" class="btn-secondary" title="Real cycle on AKS, but the cleaner region's carbon input is spiked ×3 first (scenario)">
+              ⚡ Run with simulated spike
+            </button>
+            <button id="btnStopCycle" class="btn-secondary btn-danger" disabled>Force stop live cycle</button>
+            <button id="btnResetPage" class="btn-secondary">Reset page</button>
+            <label class="toolbar-label">
               Flow:
-              <select id="flowSpeedSelect" style="background: var(--c-deep-bg); border: 1px solid var(--c-border-subtle); color: var(--c-crisp-text); padding: 3px 6px; border-radius: 4px; font-family: var(--font-mono);">
+              <select id="flowSpeedSelect" class="toolbar-select">
                 <option value="0.5">0.5x</option>
                 <option value="1.0" selected>1.0x</option>
                 <option value="2.0">2.0x</option>
               </select>
             </label>
-            <label style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--c-text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer;">
-              <input type="checkbox" id="autoDemoToggle" checked style="accent-color: var(--c-steel-accent);"> Auto-Demo
-            </label>
           </div>
         </div>
 
-        <!-- HTML5 Canvas with Dynamic Particle Engine -->
         <div class="canvas-wrapper">
-          <canvas id="trafficCanvas"></canvas>
+          <canvas id="trafficCanvas" aria-label="Request flow to the cluster where the workload is placed"></canvas>
+          <div class="canvas-sim-note" id="canvasNote"></div>
 
-          <!-- Overlay Cluster HUDs -->
           <div class="cluster-hud-container">
-            <!-- Primary Cluster HUD (East US 2) — CLICKABLE -->
-            <div id="primaryClusterHud" class="hud-panel primary-cluster active clickable" title="Click to run AI decision simulation">
+            <div id="primaryClusterHud" class="hud-panel primary-cluster clickable" role="group" tabindex="0"
+                 aria-label="East US 2 cluster" title="Click the cluster card or press Enter for the decision walkthrough (simulation)">
               <div class="hud-header">
                 <span class="cluster-tag">Azure Primary · East US 2</span>
-                <span class="pulse-dot crimson"></span>
+                <span class="pulse-dot unknown" id="primaryHudDot"></span>
               </div>
               <div class="cluster-name">aks-primary-eastus2</div>
               <div class="carbon-badge high" id="primaryCarbonBadge">
                 <span>⚡ <span id="liveEastIntensity">loading…</span></span>
               </div>
-              <div style="font-size: 0.75rem; color: var(--c-text-muted);">PJM Interconnection · US-MIDA-PJM</div>
+              <div class="hud-sub">PJM Interconnection · US-MIDA-PJM</div>
               <div class="hud-metrics-row">
-                <span>Pods: <span id="metaPrimaryPods">28/28</span></span>
-                <span>VMSS: D2as_v7</span>
+                <span>Cluster: <span id="metaPrimaryPods">checking…</span></span>
               </div>
-              <div class="click-hint">▶ Click to simulate decision</div>
+              <div class="hud-job" id="primaryJobState"></div>
+              <div class="carbon-meter">
+                <label for="simEastCarbon">Simulation carbon · East US 2</label>
+                <div class="meter-reading"><output id="simEastValue" for="simEastCarbon">400</output><span>gCO₂eq/kWh</span></div>
+                <meter id="simEastMeter" min="0" max="1200" low="200" high="600" optimum="0" value="400" aria-label="East US 2 simulated carbon meter"></meter>
+                <input id="simEastCarbon" type="range" min="0" max="1200" step="1" value="400" aria-label="Simulation carbon: East US 2">
+                <div class="meter-scale"><span>0 · cleaner</span><span>1200 · higher carbon</span></div>
+              </div>
+              <button id="primaryWalkthrough" class="click-hint walkthrough-button">▶ Decision walkthrough</button>
             </div>
 
-            <!-- Central AI Trust Gate HUD -->
             <div class="hud-panel orchestrator-node">
               <div class="hud-header" style="justify-content: center;">
-                <span class="cluster-tag">Trust-Gated Hybrid AI</span>
+                <span class="cluster-tag">Scheduler · gate v2.1</span>
               </div>
-              <div class="cluster-name" style="font-size: 0.95rem;">Llama-3 + PuLP MILP</div>
-              <div style="font-size: 0.8rem; font-family: var(--font-mono); color: #a8c0dd; margin: 4px 0;">
-                Trust Score: <strong>0.97</strong> (PASS &ge; 0.6)
-              </div>
-              <div style="font-size: 0.72rem; color: var(--c-text-muted);">
-                Fail-closed fallback protection active
-              </div>
+              <div class="cluster-name" style="font-size: 0.95rem;">Exact program + gated proposer</div>
+              <div class="hud-recommendation" id="hudRecommendation">Lower-carbon region now: —</div>
+              <div class="hud-sub">Fail-closed: if data checks fail, the scheduler holds</div>
             </div>
 
-            <!-- Secondary Cluster HUD (West US 2) — CLICKABLE -->
-            <div id="secondaryClusterHud" class="hud-panel secondary-cluster clickable" title="Click to run AI decision simulation">
+            <div id="secondaryClusterHud" class="hud-panel secondary-cluster clickable" role="group" tabindex="0"
+                 aria-label="West US 2 cluster" title="Click the cluster card or press Enter for the decision walkthrough (simulation)">
               <div class="hud-header">
                 <span class="cluster-tag">Azure Secondary · West US 2</span>
-                <span class="pulse-dot"></span>
+                <span class="pulse-dot unknown" id="secondaryHudDot"></span>
               </div>
               <div class="cluster-name">aks-secondary-westus2</div>
               <div class="carbon-badge clean" id="secondaryCarbonBadge">
                 <span>🍃 <span id="liveWestIntensity">loading…</span></span>
               </div>
-              <div style="font-size: 0.75rem; color: var(--c-text-muted);">BPA Hydro · US-NW-BPAT</div>
+              <div class="hud-sub">Bonneville Power · US-NW-BPAT</div>
               <div class="hud-metrics-row">
-                <span>Pods: <span id="metaSecondaryPods">28/28</span></span>
-                <span>Decided: <span id="liveDecisionRegion">—</span></span>
+                <span>Cluster: <span id="metaSecondaryPods">checking…</span></span>
               </div>
-              <div class="click-hint">▶ Click to simulate decision</div>
+              <div class="hud-job" id="secondaryJobState"></div>
+              <div class="carbon-meter">
+                <label for="simWestCarbon">Simulation carbon · West US 2</label>
+                <div class="meter-reading"><output id="simWestValue" for="simWestCarbon">150</output><span>gCO₂eq/kWh</span></div>
+                <meter id="simWestMeter" min="0" max="1200" low="200" high="600" optimum="0" value="150" aria-label="West US 2 simulated carbon meter"></meter>
+                <input id="simWestCarbon" type="range" min="0" max="1200" step="1" value="150" aria-label="Simulation carbon: West US 2">
+                <div class="meter-scale"><span>0 · cleaner</span><span>1200 · higher carbon</span></div>
+              </div>
+              <button id="secondaryWalkthrough" class="click-hint walkthrough-button">▶ Decision walkthrough</button>
             </div>
           </div>
-
         </div>
 
-        <!-- Status Banner -->
+        <section class="placement-simulation" aria-label="Adjustable placement simulation">
+          <div class="simulation-heading"><div><span class="tag tag-sim">SIMULATION</span> <strong>Adjust carbon and watch placement switch</strong></div>
+            <div class="simulation-actions">
+              <button id="btnRunSimulation" class="btn-primary">Run simulation</button>
+              <button id="btnSwapCarbon" class="btn-secondary" disabled>Swap carbon values</button>
+              <button id="btnExitSimulation" class="btn-secondary" disabled>Exit simulation</button>
+            </div>
+          </div>
+          <p class="simulation-help">Adjust the meters beside each cluster. This browser simulation chooses the lower-carbon region with both regions assumed feasible. Live readings stay unchanged.</p>
+          <ol id="simulationSteps" class="cycle-steps"><li data-sim-step="inputs">Read meters</li><li data-sim-step="compare">Compare carbon</li><li data-sim-step="switch">Switch placement</li><li data-sim-step="complete">Show result</li></ol>
+          <div id="simulationStatus" class="simulation-status" aria-live="polite">Set the meters, then run the simulation. No model is called and no AKS workload is started.</div>
+          <ul id="simulationEvents" class="cycle-events"></ul>
+        </section>
+
         <div class="animation-banner">
           <div id="statusBannerMsg" class="banner-message">
-            <span class="live-indicator crimson">● FETCHING LIVE DATA</span> Connecting to <strong>Electricity Maps API</strong> (US-MIDA-PJM / US-NW-BPAT)…
+            <span class="live-indicator crimson">● CONNECTING</span> Requesting the latest values from Electricity Maps…
           </div>
-          <div style="color: var(--c-text-muted); font-size: 0.78rem; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
-            <span>Net Carbon Impact: <span id="liveCarbonDiff" style="color: #ff6b6b; font-weight: 700;">loading…</span></span>
-            <span style="margin-left: auto;"><span id="carbonDataTimestamp" style="font-size:0.72rem; color: var(--c-text-muted);">Fetching Electricity Maps…</span></span>
-            <span>Reduction: <strong id="liveCarbonReduction" style="color:#a8c0dd;">—</strong></span>
-            <span>Last poll: <span id="liveLastPoll" style="font-family: var(--font-mono);">—</span></span>
+          <div id="previewBannerMsg" class="banner-message banner-secondary"></div>
+          <div class="banner-meta">
+            <span>Observed: <span id="carbonObservedAt">—</span></span>
+            <span>Last poll: <span id="liveLastPoll">—</span></span>
+            <span>Intensity difference: <strong id="liveCarbonReduction">—</strong></span>
+            <span class="banner-meta-note">Signal: Electricity Maps latest, lifecycle gCO₂eq/kWh</span>
           </div>
+        </div>
+
+        <div class="cycle-panel" id="cyclePanel">
+          <div class="cycle-head">
+            <div>
+              <span class="tag tag-live">LIVE RUN</span>
+              <strong>Real scheduling cycle</strong>
+              <span class="cycle-sub">Fresh Electricity Maps capture → Llama-3 8B proposal → gate v2.1 → fixture reset and wrk2 benchmark (compose-post, 10 req/s, 60 s) on the chosen AKS cluster. About 2–8 minutes.</span>
+              <span class="cycle-sub"><span class="tag tag-sim">SCENARIO</span> <em>Run with simulated spike</em> raises the currently cleaner region's intensity (now and forecast) to at least 3× in the scheduler's input only. The decision, the cluster switch, the Jobs and the measurements are real.</span>
+            </div>
+          </div>
+          <ol class="cycle-steps" id="cycleSteps">
+            <li data-step="capturing">Capture carbon</li>
+            <li data-step="deciding">Propose &amp; gate</li>
+            <li data-step="resetting">Reset fixture</li>
+            <li data-step="benchmarking">Benchmark</li>
+            <li data-step="completed">Receipt</li>
+          </ol>
+          <div class="cycle-status" id="cycleStatus" aria-live="polite">No cycle has been run from this page yet.</div>
+          <ul class="cycle-events" id="cycleEvents"></ul>
+          <div class="cycle-receipt" id="cycleReceipt" hidden></div>
+          <div class="cycle-history" id="cycleHistory" hidden></div>
         </div>
       </div>
     </section>
 
-    <!-- Metrics & Presentation Section -->
-    <section style="padding-bottom: 40px;">
+    <!-- ===================================================== RECORDED RESULTS -->
+    <section id="recorded" class="recorded-section">
       <div class="section-title-wrap">
-        <h3>Live Azure Execution & Performance Metrics</h3>
-        <p>Telemetry captured directly from live Azure Kubernetes service execution (Run ID: <code>real-milp-pilot-v2</code>) and comparative benchmarks.</p>
+        <h3>Recorded Results</h3>
+      </div>
+
+      <div id="evidenceMissing" class="evidence-missing" hidden>
+        Recorded results are unavailable: <code>web/data/evidence.json</code> could not be loaded. Run <code>scripts/export_web_evidence.py</code>.
       </div>
 
       <div class="dashboard-grid">
-        
-        <!-- Live Run Card: real-milp-pilot-v2 -->
+
         <div class="col-6">
           <div class="metric-card">
             <div class="card-heading">
-              <h4>Live AKS Workload Receipt</h4>
-              <span class="card-badge" style="background: rgba(119, 141, 169, 0.2); color: #c4d7ed;">real-milp-pilot-v2</span>
+              <h4>Live AKS Session</h4>
+              <span class="card-badge tag-recorded-badge">gate v2.1 · 44 runs</span>
             </div>
-
             <div class="telemetry-stats-grid">
               <div class="stat-box">
-                <div class="stat-label">Measured p95 Latency</div>
-                <div class="stat-val highlight-steel" id="statP95Latency">0.33 ms</div>
-                <div class="stat-sub">Strictly &le; 500 ms SLO Limit</div>
+                <div class="stat-label">Runs completed</div>
+                <div class="stat-val highlight-steel" id="evRuns">—</div>
+                <div class="stat-sub" id="evRunsSub">8 clean + 4 fault rounds</div>
               </div>
               <div class="stat-box">
-                <div class="stat-label">Measured Throughput</div>
-                <div class="stat-val" id="statThroughput">10.85 RPS</div>
-                <div class="stat-sub">651 requests in 1.0 min</div>
+                <div class="stat-label">Sessions in window, SLO passed</div>
+                <div class="stat-val" id="evSlo">—</div>
+                <div class="stat-sub">verdict recorded in each receipt</div>
               </div>
               <div class="stat-box">
-                <div class="stat-label">Error Rate</div>
-                <div class="stat-val highlight-crimson" id="statErrorRate">5.37%</div>
-                <div class="stat-sub">35 timeouts / 651 reqs</div>
+                <div class="stat-label">Measured P95, compose-post</div>
+                <div class="stat-val" id="evP95">—</div>
+                <div class="stat-sub" id="evP95Sub">eastus2 · westus2 range</div>
               </div>
               <div class="stat-box">
-                <div class="stat-label">Selected Carbon</div>
-                <div class="stat-val" id="statSelectedCarbon">563.0</div>
-                <div class="stat-sub">gCO₂eq/kWh (PJM Grid)</div>
+                <div class="stat-label">Fault rounds held</div>
+                <div class="stat-val highlight-crimson" id="evHolds">—</div>
+                <div class="stat-sub" id="evHoldsSub">identity check on returned zone</div>
               </div>
             </div>
-
-            <div class="metadata-list">
-              <div class="metadata-row">
-                <span class="meta-key">Cluster Context <span id="clusterStatusBadge" style="font-size:0.65rem;"></span></span>
-                <span class="meta-val" id="metaClusterContext">aks-primary-eastus2 (Group_1_East)</span>
-              </div>
-              <div class="metadata-row">
-                <span class="meta-key">Primary Pods (benchmark ns)</span>
-                <span class="meta-val" id="metaPrimaryPodsCard">checking…</span>
-              </div>
-              <div class="metadata-row">
-                <span class="meta-key">Secondary Pods (benchmark ns)</span>
-                <span class="meta-val" id="metaSecondaryPodsCard">checking…</span>
-              </div>
-              <div class="metadata-row">
-                <span class="meta-key">VMSS Node</span>
-                <span class="meta-val" id="metaNodeName">aks-system-35513594-vmss000000</span>
-              </div>
-              <div class="metadata-row">
-                <span class="meta-key">Target Pod IP</span>
-                <span class="meta-val" id="metaPodIp">10.224.0.15</span>
-              </div>
-              <div class="metadata-row">
-                <span class="meta-key">Database State Reset</span>
-                <span class="meta-val" id="metaResetDuration">2m 42s (Reed98 seed=50)</span>
-              </div>
-              <div class="metadata-row">
-                <span class="meta-key">Cluster Status Checked</span>
-                <span class="meta-val" id="metaClusterTimestamp">—</span>
-              </div>
+            <div class="metadata-list" id="evSessionMeta"></div>
+            <div class="live-subsection">
+              <div class="live-subsection-title"><span class="tag tag-live">LIVE</span> Cluster check now (kubectl from the web host)</div>
+              <div class="metadata-row"><span class="meta-key">aks-primary-eastus2</span><span class="meta-val" id="metaPrimaryPodsCard">checking…</span></div>
+              <div class="metadata-row"><span class="meta-key">aks-secondary-westus2</span><span class="meta-val" id="metaSecondaryPodsCard">checking…</span></div>
+              <div class="metadata-row"><span class="meta-key">Checked</span><span class="meta-val" id="metaClusterTimestamp">—</span></div>
             </div>
           </div>
         </div>
 
-        <!-- 5-Component Trust Gate Card -->
         <div class="col-6">
           <div class="metric-card">
             <div class="card-heading">
-              <h4>5-Component Trust Gate Verifier</h4>
-              <span class="card-badge">Threshold: 0.60</span>
+              <h4>Gate v2.1 Sandbox</h4>
+              <span class="card-badge tag-sim-badge">SIMULATION</span>
+            </div>
+            <p class="card-intro">Runs the gate's decision rule in your browser on the inputs below, with the live carbon values.</p>
+
+            <div class="sandbox-presets">
+              <button class="btn-secondary btn-small" data-preset="agree">Agreeing proposal</button>
+              <button class="btn-secondary btn-small" data-preset="injection">Prompt injection (dirty region)</button>
+              <button class="btn-secondary btn-small" data-preset="zone">Zone mis-mapping</button>
+              <button class="btn-secondary btn-small" data-preset="stale">Stale data</button>
+              <button class="btn-secondary btn-small" data-preset="slo">Infeasible region</button>
+              <button class="btn-secondary btn-small" data-preset="score0">Evaluator scores 0</button>
             </div>
 
-            <p style="font-size: 0.82rem; color: var(--c-text-secondary); margin-bottom: 12px;">
-              Autonomous proposals by Llama-3 must pass a fail-closed weighted verification before execution.
-            </p>
-
-            <div class="trust-components-grid">
-              <!-- Faithfulness -->
-              <div class="trust-item">
-                <div class="trust-label-row">
-                  <span class="trust-name">RAGAS Faithfulness <span class="trust-weight">(w: 0.20)</span></span>
-                  <span class="trust-score-val" id="valFaithfulness">0.95</span>
-                </div>
-                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barFaithfulness" style="width: 95%;"></div></div>
-              </div>
-
-              <!-- Context Precision -->
-              <div class="trust-item">
-                <div class="trust-label-row">
-                  <span class="trust-name">RAGAS Context Precision <span class="trust-weight">(w: 0.20)</span></span>
-                  <span class="trust-score-val" id="valPrecision">0.92</span>
-                </div>
-                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barPrecision" style="width: 92%;"></div></div>
-              </div>
-
-              <!-- NeMo Guardrails -->
-              <div class="trust-item">
-                <div class="trust-label-row">
-                  <span class="trust-name">NeMo Guardrails <span class="trust-weight">(w: 0.20)</span></span>
-                  <span class="trust-score-val" id="valGuardrails">1.00</span>
-                </div>
-                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barGuardrails" style="width: 100%;"></div></div>
-              </div>
-
-              <!-- Data Freshness -->
-              <div class="trust-item">
-                <div class="trust-label-row">
-                  <span class="trust-name">Data Freshness <span class="trust-weight">(w: 0.20)</span></span>
-                  <span class="trust-score-val" id="valFreshness">1.00</span>
-                </div>
-                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barFreshness" style="width: 100%;"></div></div>
-              </div>
-
-              <!-- Execution Feasibility -->
-              <div class="trust-item">
-                <div class="trust-label-row">
-                  <span class="trust-name">Execution Feasibility <span class="trust-weight">(w: 0.20)</span></span>
-                  <span class="trust-score-val" id="valFeasibility">1.00</span>
-                </div>
-                <div class="trust-bar-bg"><div class="trust-bar-fill" id="barFeasibility" style="width: 100%;"></div></div>
-              </div>
+            <div class="sandbox-grid">
+              <label>Proposed region
+                <select id="sbRegion"><option value="westus2">westus2</option><option value="eastus2">eastus2</option></select>
+              </label>
+              <label>Carbon data age
+                <select id="sbAge"><option value="fresh">fresh (&lt; 2 h)</option><option value="stale">48 h old</option></select>
+              </label>
+              <label>Zone the provider returned
+                <select id="sbZone"><option value="match">as requested</option><option value="inwe">IN-WE for both regions</option></select>
+              </label>
+              <label>westus2 catalog P95
+                <select id="sbCatalog"><option value="140">140 ms (≤ 500 ms SLO)</option><option value="600">600 ms (&gt; SLO)</option></select>
+              </label>
+              <label>Faithfulness F <span id="sbFVal">0.43</span>
+                <input type="range" id="sbF" min="0" max="1" step="0.01" value="0.43">
+              </label>
+              <label>Context precision CP <span id="sbCPVal">1.00</span>
+                <input type="range" id="sbCP" min="0" max="1" step="0.01" value="1">
+              </label>
+              <label class="sandbox-wide">Evidence-score rule
+                <select id="sbRule">
+                  <option value="R2">(F + CP)/2 ≥ 0.6 (configured default)</option>
+                  <option value="R0">hard checks only (recommended by the evaluation)</option>
+                </select>
+              </label>
             </div>
 
-            <!-- Composite Score Panel -->
-            <div class="trust-gate-composite">
-              <span class="threshold-marker">WEIGHTED TRUST SCORE</span>
-              <div class="composite-score" id="trustCompositeScore">0.974</div>
-              <div id="trustGateDecision" style="font-family: var(--font-mono); font-size: 0.8rem;">
-                <span style="color: #a8c0dd;">● PROPOSAL ACCEPTED</span> (Score &ge; 0.60)
-              </div>
-            </div>
-
-            <!-- Fail-closed banner -->
-            <div id="trustGateAlertBanner" style="display: none; margin-top: 10px; padding: 10px; background: rgba(214, 40, 40, 0.2); border: 1px solid var(--c-alert-crimson); border-radius: var(--radius-sm); font-size: 0.78rem; font-family: var(--font-mono); color: #ff8585;"></div>
-
-            <!-- Adversary Simulator Sliders -->
-            <div class="simulator-controls">
-              <div style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--c-text-muted); margin-bottom: 8px; text-transform: uppercase;">Adversarial Hallucination Simulator:</div>
-              <div class="slider-group">
-                <div class="slider-header">
-                  <span>Simulate Hallucination (Faithfulness):</span>
-                </div>
-                <input type="range" id="sliderFaithfulness" min="0.0" max="1.0" step="0.05" value="0.95">
-              </div>
-              <div class="slider-group">
-                <div class="slider-header">
-                  <span>Simulate Policy Breach (Guardrails):</span>
-                </div>
-                <input type="range" id="sliderGuardrails" min="0.0" max="1.0" step="0.05" value="1.0">
-              </div>
-              <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="btnSimulateHallucination" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">Simulate Attack</button>
-                <button id="btnResetTrustScores" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;">Reset Default</button>
-              </div>
-            </div>
-
+            <div class="sandbox-result" id="sbResult" aria-live="polite"></div>
+            <ul class="sandbox-checks" id="sbChecks"></ul>
           </div>
         </div>
 
-        <!-- 4-Policy Head-to-Head Comparison Matrix -->
         <div class="col-12">
           <div class="metric-card">
             <div class="card-heading">
-              <h4>Four-Policy Comparative Study</h4>
-              <span class="card-badge">Summary Evidence</span>
+              <h4>Policies in the Live Session</h4>
+              <span class="card-badge tag-recorded-badge">RECORDED</span>
             </div>
-
-            <p style="font-size: 0.85rem; color: var(--c-text-secondary);">
-              Direct comparison of scheduling policies against identical frozen carbon intensity traces and DeathStarBench workloads.
-            </p>
-
             <div class="policy-table-wrapper">
               <table class="policy-table">
                 <thead>
                   <tr>
-                    <th>Policy Mode</th>
-                    <th>Target Cluster</th>
-                    <th>Mean Carbon Intensity</th>
-                    <th>Carbon vs Static</th>
-                    <th>p95 Latency</th>
-                    <th>Fallback Rate</th>
-                    <th>SLO Status</th>
+                    <th>Rounds</th>
+                    <th>Policy</th>
+                    <th>Runs</th>
+                    <th>Ran in eastus2 / westus2 / held</th>
+                    <th>LLM proposed eastus2 / westus2</th>
+                    <th>Mean true intensity</th>
+                    <th>Best available</th>
+                    <th>Median P95</th>
+                    <th>SLO passed</th>
                   </tr>
                 </thead>
-                <tbody id="policyTableBody">
-                  <!-- Injected by metrics-view.js -->
-                </tbody>
+                <tbody id="policyTableBody"><tr><td colspan="9">Loading recorded results…</td></tr></tbody>
               </table>
             </div>
           </div>
         </div>
 
-        <!-- 28-Microservice Dependency DAG -->
-        <div class="col-8">
+        <div class="col-12">
           <div class="metric-card">
             <div class="card-heading">
-              <h4>DeathStarBench Social Network Topology (28 Microservices)</h4>
-              <span class="card-badge" style="background: rgba(76, 175, 130, 0.15); color: #4caf82; border: 1px solid rgba(76, 175, 130, 0.35);">Interactive · Click Any Node</span>
+              <h4>Offline Evaluation · Replay of 2019–2024 Grid Data</h4>
+              <span class="card-badge tag-recorded-badge">RECORDED</span>
             </div>
-            <div id="selectedNodeInfo" style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--c-text-secondary); margin-bottom: 10px;">
-              💡 <strong>Click any microservice node</strong> to simulate AI cross-region scheduling decisions (Carbon Fetch → MILP Solve → LLM Reason → Trust Gate → Dispatch).
-            </div>
-            <div class="dag-container">
-              <svg id="dagSvg"></svg>
-            </div>
+            <p class="card-intro">Open Grid Emissions hourly data for PJM and BPAT, injected and held-out faults, a random/adversarial proposal corpus and Llama-3 8B. Each line names its key in the experiment report.</p>
+            <div class="offline-grid" id="offlineGrid"></div>
           </div>
         </div>
 
-        <!-- Environmental Impact Counter & wrk2 Logs — Blended in single unified card -->
+        <div class="col-8">
+          <div class="metric-card">
+            <div class="card-heading">
+              <h4>DeathStarBench Social Network · Selected Services</h4>
+              <span class="card-badge tag-sim-badge">ILLUSTRATION</span>
+            </div>
+            <div id="selectedNodeInfo" class="node-info">
+              Click a service to open a decision walkthrough (simulation). The scheduler places the whole regional copy of the application, so every service moves together.
+            </div>
+            <div class="dag-container">
+              <svg id="dagSvg" role="img" aria-label="Selected DeathStarBench services and their typical call paths"></svg>
+            </div>
+            <p class="card-footnote" id="dagFootnote">Call paths follow the DeathStarBench design; they are not discovered from the cluster.</p>
+          </div>
+        </div>
+
         <div class="col-4">
-          <div class="metric-card" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
-            <!-- Top Section: Environmental Savings Ticker -->
+          <div class="metric-card side-card">
             <div>
               <div class="card-heading">
-                <h4>Environmental Savings Ticker</h4>
-                <span class="card-badge">Avoided Emissions</span>
+                <h4>Carbon Difference Now</h4>
+                <span class="card-badge tag-live-badge">LIVE</span>
               </div>
-              <div style="text-align: center; padding: 10px 0 14px;">
-                <div style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--c-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Cumulative CO₂ Saved</div>
-                <div id="carbonSavedCounter" style="font-family: var(--font-heading); font-size: 1.9rem; font-weight: 700; color: #a8c0dd; margin: 4px 0;">1.42 kg CO₂</div>
-                <div style="font-size: 0.76rem; color: var(--c-text-secondary); font-family: var(--font-mono);">
-                  Equivalent to <strong id="evMilesEquivalent" style="color: var(--c-crisp-text);">7.9 mi</strong> driven in an electric vehicle.
-                </div>
+              <div class="delta-box">
+                <div class="delta-label">Per kWh run in westus2 instead of eastus2</div>
+                <div class="delta-value" id="deltaPerKwh">—</div>
+                <div class="delta-sub" id="deltaSub">Live intensity difference times 1 kWh. Not a measured saving: both clusters stay provisioned.</div>
               </div>
             </div>
 
-            <!-- Bottom Section: Blended macOS Terminal Box -->
-            <div class="terminal-card" style="flex: 1; display: flex; flex-direction: column; margin-top: 10px; min-height: 0;">
+            <div class="terminal-card">
               <div class="terminal-header">
                 <div class="terminal-dots">
-                  <span class="terminal-dot"></span>
-                  <span class="terminal-dot"></span>
-                  <span class="terminal-dot"></span>
+                  <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
                 </div>
-                <span class="terminal-header-title">Live wrk2 Benchmark Stream</span>
+                <span class="terminal-header-title" id="terminalTitle">Recorded wrk2 output</span>
                 <span style="width:40px;"></span>
               </div>
-              <div class="terminal-body" id="terminalOutput" style="flex: 1; min-height: 140px; max-height: 240px; overflow-y: auto;"></div>
+              <div class="terminal-body" id="terminalOutput"></div>
             </div>
           </div>
         </div>
@@ -423,21 +390,23 @@
 
   </main>
 
-  <!-- Footer -->
   <footer class="footer-bar">
     <div class="container">
-      <div>Carbon-Aware Cloud Optimization &copy; 2026 · Built on Azure Kubernetes Service (AKS) & Electricity Maps</div>
-      <div style="margin-top: 6px; font-size: 0.74rem; color: var(--c-slate-border);">
-        DeathStarBench Commit: <code>6ecb097</code> · Primary: <code>eastus2</code> · Secondary: <code>westus2</code>
+      <div>Carbon-Aware Cloud Optimization &copy; 2026 · Azure Kubernetes Service · Electricity Maps · Open Grid Emissions</div>
+      <div class="footer-sub">
+        <a href="https://github.com/JayacharanR/Carbon-Aware-Cloud-Optimization" target="_blank" rel="noopener noreferrer">github.com/JayacharanR/Carbon-Aware-Cloud-Optimization</a> ·
+        DeathStarBench commit <code>6ecb097</code> · Primary <code>eastus2</code> · Secondary <code>westus2</code> ·
+        <span class="tag tag-live">LIVE</span> fetched now · <span class="tag tag-recorded">RECORDED</span> from dated receipts · <span class="tag tag-live">LIVE RUN</span> real cycle on AKS · <span class="tag tag-sim">SIMULATION</span> computed in the browser
       </div>
     </div>
   </footer>
 
-  <!-- Scripts -->
-  <script src="js/traffic-animation.js?v=2.1"></script>
-  <script src="js/metrics-view.js?v=2.1"></script>
-  <script src="js/graph-topology.js?v=2.1"></script>
-  <script src="js/ai-thinking.js?v=2.1"></script>
-  <script src="js/app.js?v=2.1"></script>
+  <script src="js/traffic-animation.js?v=3.9"></script>
+  <script src="js/gate-model.js?v=3.9"></script>
+  <script src="js/metrics-view.js?v=3.9"></script>
+  <script src="js/graph-topology.js?v=3.9"></script>
+  <script src="js/ai-thinking.js?v=3.9"></script>
+  <script src="js/placement-simulation.js?v=4.0"></script>
+  <script src="js/app.js?v=4.1"></script>
 </body>
 </html>

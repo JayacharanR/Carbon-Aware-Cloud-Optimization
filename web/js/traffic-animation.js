@@ -1,9 +1,9 @@
 /**
- * 60FPS Fluid Particle Traffic Animation Engine
- * Simulates real-time microservice workload routing across Azure AKS clusters
- * (aks-primary-eastus2 vs aks-secondary-westus2) with dynamic cubic bezier transitions.
+ * Particle animation of request flow to the previewed region.
  *
- * v2.0 — live carbon values from /api/live-carbon update node labels in real-time.
+ * This is an illustration only: it never moves traffic. The previewed region
+ * and every status text are set by app.js (DashboardController); this class
+ * only draws.
  */
 
 class TrafficDirectorAnimation {
@@ -18,9 +18,10 @@ class TrafficDirectorAnimation {
     this.isTransitioning = false;
     this.flowSpeed = 1.0;
     this.isPaused = false;
+    this.holding = false;   // set by DashboardController when there is no route to show
     this.lastFrameTime = performance.now();
 
-    // Live carbon data (updated externally via setLiveCarbonValues)
+    // Carbon values for node labels (set by DashboardController via setCarbonLabels)
     this.liveCarbon = {
       eastus: null,      // gCO₂/kWh
       westus2: null,
@@ -52,8 +53,8 @@ class TrafficDirectorAnimation {
 
     // Node locations (proportional) — sub labels updated dynamically
     this.nodes = {
-      ingress: { x: 0.5, y: 0.12, label: 'Client Ingress (wrk2)', sub: '10 RPS / 2 Threads' },
-      orchestrator: { x: 0.5, y: 0.48, label: 'Hybrid AI & Trust Gate', sub: 'Trust: 0.97 (PASS)' },
+      ingress: { x: 0.5, y: 0.12, label: 'wrk2 load generator', sub: 'compose-post · 10 req/s' },
+      orchestrator: { x: 0.5, y: 0.48, label: 'Scheduler', sub: 'gate v2.1' },
       primary: {
         x: 0.20, y: 0.74,
         label: 'aks-primary-eastus2',
@@ -77,55 +78,24 @@ class TrafficDirectorAnimation {
   // -------------------------------------------------------------------------
   // Live data injection (called by app.js on every /api/live-carbon response)
   // -------------------------------------------------------------------------
-  setLiveCarbonValues(eastIntensity, westIntensity, updatedAt, source) {
-    this.liveCarbon = {
-      eastus: eastIntensity,
-      westus2: westIntensity,
-      updatedAt: updatedAt,
-      source: source || 'live',
-    };
-
-    // Update node sub-labels with real gCO₂/kWh values
-    if (eastIntensity !== null && eastIntensity !== undefined) {
-      this.nodes.primary.sub = `PJM Grid — ${Math.round(eastIntensity)} gCO₂/kWh`;
-    }
-    if (westIntensity !== null && westIntensity !== undefined) {
-      this.nodes.secondary.sub = `BPA Hydro — ${Math.round(westIntensity)} gCO₂/kWh`;
-    }
-
-    // Update the data-freshness timestamp display element
-    this._updateTimestampDisplay(updatedAt);
-  }
-
-  _updateTimestampDisplay(updatedAt) {
-    const el = document.getElementById('carbonDataTimestamp');
-    if (!el || !updatedAt) return;
-    try {
-      const d = new Date(updatedAt);
-      const diffMs = Date.now() - d.getTime();
-      const diffMin = Math.floor(diffMs / 60000);
-      if (diffMin < 1) {
-        el.textContent = 'Updated just now';
-      } else if (diffMin < 60) {
-        el.textContent = `Updated ${diffMin}m ago`;
-      } else {
-        el.textContent = `Updated ${Math.floor(diffMin / 60)}h ago`;
-      }
-      el.title = `Data from Electricity Maps as of ${d.toLocaleTimeString()}`;
-    } catch (_) {
-      el.textContent = 'Live';
-    }
+  /** Node sub-labels; null means "no value" and is shown as such. */
+  setCarbonLabels(east, west, suffixEast = '', suffixWest = '') {
+    this.liveCarbon.eastus = east;
+    this.liveCarbon.westus2 = west;
+    this.nodes.primary.sub = east == null ? 'PJM — no data' : `PJM — ${Math.round(east)} gCO₂/kWh${suffixEast}`;
+    this.nodes.secondary.sub = west == null ? 'BPAT — no data' : `BPAT — ${Math.round(west)} gCO₂/kWh${suffixWest}`;
   }
 
   // -------------------------------------------------------------------------
   initCanvasSize() {
-    const rect = this.canvas.parentElement.getBoundingClientRect();
+    // Measure the canvas itself: on narrow screens the HUD cards flow below it inside the same wrapper.
+    const rect = this.canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     this.width = rect.width;
     this.height = rect.height;
     this.canvas.width = this.width * dpr;
     this.canvas.height = this.height * dpr;
-    this.ctx.scale(dpr, dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset, so resizes do not compound
   }
 
   setRoute(targetState) {
@@ -235,7 +205,8 @@ class TrafficDirectorAnimation {
     }
 
     this.spawnTimer += dt;
-    if (this.spawnTimer >= this.spawnInterval && this.particles.length < this.maxParticles) {
+    // While the carbon data are on hold, no new requests are drawn.
+    if (!this.holding && this.spawnTimer >= this.spawnInterval && this.particles.length < this.maxParticles) {
       this.spawnParticle();
       this.spawnTimer = 0;
     }
@@ -398,19 +369,7 @@ class TrafficDirectorAnimation {
       ctx.fillText(node.sub, coords.x, coords.y + subOffset);
     }
 
-    // Live data badge in top-right of canvas
-    if (this.liveCarbon.source === 'live') {
-      ctx.font = 'bold 9px "Inter", monospace';
-      ctx.fillStyle = this.colors.liveGreen;
-      ctx.textAlign = 'right';
-      ctx.fillText('● LIVE', this.width - 10, 18);
-    } else if (this.liveCarbon.source === 'loading') {
-      ctx.font = '9px "Inter", monospace';
-      ctx.fillStyle = this.colors.slate;
-      ctx.textAlign = 'right';
-      ctx.fillText('⟳ Fetching live data…', this.width - 10, 18);
-    }
-    ctx.textAlign = 'center'; // reset
+    ctx.textAlign = 'center';
   }
 
   drawNodeCircle(x, y, radius, color, label) {
@@ -487,46 +446,9 @@ class TrafficDirectorAnimation {
   updateHudState() {
     const primaryHud = document.getElementById('primaryClusterHud');
     const secondaryHud = document.getElementById('secondaryClusterHud');
-    const statusMsg = document.getElementById('statusBannerMsg');
-    const metricCarbonDiff = document.getElementById('liveCarbonDiff');
-
-    const eastVal = this.liveCarbon.eastus !== null
-      ? `${Math.round(this.liveCarbon.eastus)} gCO₂eq/kWh`
-      : '— gCO₂eq/kWh';
-    const westVal = this.liveCarbon.westus2 !== null
-      ? `${Math.round(this.liveCarbon.westus2)} gCO₂eq/kWh`
-      : '— gCO₂eq/kWh';
-
-    let reductionText = '';
-    if (this.liveCarbon.eastus !== null && this.liveCarbon.westus2 !== null) {
-      const pct = ((this.liveCarbon.eastus - this.liveCarbon.westus2) / this.liveCarbon.eastus * 100);
-      reductionText = pct > 0 ? `${pct.toFixed(1)}% cleaner` : 'similar intensity';
-    }
-
-    if (this.state === 'optimized') {
-      if (primaryHud) primaryHud.classList.remove('active');
-      if (secondaryHud) secondaryHud.classList.add('active');
-      if (statusMsg) {
-        statusMsg.innerHTML = `<span class="live-indicator">● OPTIMIZED</span> Workload rerouted to <strong>aks-secondary-westus2</strong>. BPA Hydro: <strong>${westVal}</strong>${reductionText ? ` — ${reductionText}` : ''}. Latency p95: <strong>0.33 ms</strong>.`;
-      }
-      if (metricCarbonDiff) {
-        const diffVal = (this.liveCarbon.eastus && this.liveCarbon.westus2)
-          ? `-${Math.round(this.liveCarbon.eastus - this.liveCarbon.westus2)} gCO₂eq/kWh (${reductionText})`
-          : '-263 gCO₂eq/kWh (BPA Hydro)';
-        metricCarbonDiff.textContent = diffVal;
-        metricCarbonDiff.style.color = '#a8c0dd';
-      }
-    } else {
-      if (primaryHud) primaryHud.classList.add('active');
-      if (secondaryHud) secondaryHud.classList.remove('active');
-      if (statusMsg) {
-        statusMsg.innerHTML = `<span class="live-indicator crimson">● HIGH CARBON ALERT</span> Running on <strong>aks-primary-eastus2</strong> (PJM Grid: <strong>${eastVal}</strong>). Carbon-aware dispatch pending.`;
-      }
-      if (metricCarbonDiff) {
-        metricCarbonDiff.textContent = `Baseline — PJM Grid (${eastVal})`;
-        metricCarbonDiff.style.color = '#ff6b6b';
-      }
-    }
+    const west = this.state === 'optimized';
+    if (primaryHud) primaryHud.classList.toggle('active', !west);
+    if (secondaryHud) secondaryHud.classList.toggle('active', west);
   }
 }
 

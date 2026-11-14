@@ -1,384 +1,177 @@
 /**
- * Metrics & Trust Gate Interactive Presentation Engine
- * v2.0 — loads real project artifacts + live cluster status from /api/cluster-status.
+ * Recorded results (from web/data/evidence.json) and the gate v2.1 sandbox.
+ *
+ * Nothing here is hard-coded: every recorded number comes from evidence.json,
+ * which scripts/export_web_evidence.py builds from the experiment receipts.
+ * The sandbox runs evaluateGateV21 (gate-model.js) on the visitor's inputs.
  */
 
+const PRESETS = {
+  // Each preset changes only what its name says; the rest is the clean default.
+  agree:     { region: 'best',  age: 'fresh', zone: 'match', catalog: '140', f: 0.43, cp: 1.0, rule: 'R2' },
+  injection: { region: 'worst', age: 'fresh', zone: 'match', catalog: '140', f: 0.9,  cp: 1.0, rule: 'R2' },
+  zone:      { region: 'best',  age: 'fresh', zone: 'inwe',  catalog: '140', f: 0.43, cp: 1.0, rule: 'R2' },
+  stale:     { region: 'best',  age: 'stale', zone: 'match', catalog: '140', f: 0.43, cp: 1.0, rule: 'R2' },
+  slo:       { region: 'westus2', age: 'fresh', zone: 'match', catalog: '600', f: 0.9, cp: 1.0, rule: 'R2' },
+  score0:    { region: 'best',  age: 'fresh', zone: 'match', catalog: '140', f: 0.0,  cp: 0.0, rule: 'R2' },
+};
+
 class MetricsViewController {
-  constructor() {
-    this.trustWeights = {
-      faithfulness: 0.2,
-      precision: 0.2,
-      guardrails: 0.2,
-      freshness: 0.2,
-      feasibility: 0.2,
-    };
-
-    this.trustScores = {
-      faithfulness: 0.95,
-      precision: 0.92,
-      guardrails: 1.0,
-      freshness: 1.0,
-      feasibility: 1.0,
-    };
-
-    this.threshold = 0.60;
-    this.data = null;
-    this.init();
+  constructor(dashboard) {
+    this.dashboard = dashboard;
+    this.evidence = null;
+    this.initSandbox();
+    dashboard.onChange(() => this.evaluateSandbox());
+    this.loadEvidence();
   }
 
-  async init() {
-    await this.loadData();
-    this.renderRealAzureTelemetry();
-    this.renderPolicyTable();
-    this.initTrustGateSliders();
-    this.updateTrustGateDisplay();
-    this.renderTerminalLog();
-    // Fetch live cluster status (non-blocking)
-    this.loadLiveClusterStatus();
-  }
+  // ── Recorded results ───────────────────────────────────────────────────────
 
-  async loadData() {
+  async loadEvidence() {
     try {
-      const [runsRes, pilotRes, traceRes] = await Promise.all([
-        fetch('data/runs_summary.json').then(r => r.json()).catch(() => []),
-        fetch('data/real_pilot.json').then(r => r.json()).catch(() => null),
-        fetch('data/carbon_trace.json').then(r => r.json()).catch(() => null),
-      ]);
-
-      this.data = {
-        runs: runsRes,
-        pilot: pilotRes,
-        trace: traceRes,
-      };
-    } catch (err) {
-      console.warn('Using embedded telemetry fallbacks:', err);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Live cluster status from /api/cluster-status (real kubectl output)
-  // ---------------------------------------------------------------------------
-  async loadLiveClusterStatus() {
-    try {
-      const resp = await fetch('/api/cluster-status');
+      const resp = await fetch('data/evidence.json', { cache: 'no-store' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const status = await resp.json();
-
-      this._applyClusterStatus(status);
+      this.evidence = await resp.json();
+      window.metricsEvidence = this.evidence;
     } catch (err) {
-      console.warn('[MetricsView] Could not load live cluster status:', err);
-      // Leave displayed values from renderRealAzureTelemetry() as fallback
+      document.getElementById('evidenceMissing').hidden = false;
+      document.getElementById('policyTableBody').innerHTML = '<tr><td colspan="9">Recorded results unavailable.</td></tr>';
+      return;
     }
+    this.renderSession();
+    this.renderPolicyTable();
+    this.renderOffline();
+    this.renderRecordedLog();
   }
 
-  _applyClusterStatus(status) {
-    // Pod counts from the real benchmark namespace
-    const primary = status.primary || {};
-    const secondary = status.secondary || {};
+  renderSession() {
+    const s = this.evidence.live_session;
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    set('evRuns', `${s.runs}/${s.runs}`);
+    set('evRunsSub', `${s.clean_rounds} clean + ${s.fault_rounds} fault rounds`);
+    set('evSlo', `${s.slo_passed}/${s.executed_sessions}`);
+    const e = s.p95_ms_by_region.eastus2, w = s.p95_ms_by_region.westus2;
+    set('evP95', `${e.min}–${e.max} · ${w.min}–${w.max} ms`);
+    set('evP95Sub', `eastus2 (n=${e.n}) · westus2 (n=${w.n}); SLO 500 ms`);
+    set('evHolds', `${s.data_integrity_holds}/${s.fault_rounds}`);
+    set('evHoldsSub', `lookup returned ${s.fault_round_returned_zone} for both regions`);
 
-    // Helper to render pod count in both the HUD overlay and the metric card
-    const renderPodCount = (running, total, hasError, errorMsg, ...elementIds) => {
-      for (const id of elementIds) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        if (hasError) {
-          el.textContent = `Error: ${(errorMsg || '').substring(0, 50)}`;
-          el.style.color = '#ff8a80';
-        } else {
-          el.textContent = `${running}/${total} running`;
-          el.style.color = running > 0 ? '#4caf82' : '#ff8a80';
-        }
-      }
-    };
-
-    renderPodCount(
-      primary.running, primary.total, !!primary.error, primary.error,
-      'metaPrimaryPods', 'metaPrimaryPodsCard'
-    );
-    renderPodCount(
-      secondary.running, secondary.total, !!secondary.error, secondary.error,
-      'metaSecondaryPods', 'metaSecondaryPodsCard'
-    );
-
-    // Live cluster context labels
-    const clusterEl = document.getElementById('metaClusterContext');
-    if (clusterEl) {
-      const primaryCtx = primary.context || 'aks-primary-eastus2';
-      const secondaryCtx = secondary.context || 'aks-secondary-westus2';
-      clusterEl.textContent = `${primaryCtx} | ${secondaryCtx}`;
-    }
-
-    // Update last-checked timestamp
-    const tsEl = document.getElementById('metaClusterTimestamp');
-    if (tsEl && status.timestamp) {
-      const d = new Date(status.timestamp);
-      tsEl.textContent = `Checked: ${d.toLocaleTimeString()}`;
-    }
-
-    // Add a LIVE badge next to the cluster section heading
-    const clusterBadgeEl = document.getElementById('clusterStatusBadge');
-    if (clusterBadgeEl) {
-      clusterBadgeEl.textContent = '● LIVE';
-      clusterBadgeEl.style.color = '#4caf82';
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Azure Telemetry — static values from the real-milp-pilot-v2 run
-  // These are the actual measured results from the AKS experiment.
-  // ---------------------------------------------------------------------------
-  renderRealAzureTelemetry() {
-    const p95El = document.getElementById('statP95Latency');
-    const rpsEl = document.getElementById('statThroughput');
-    const errEl = document.getElementById('statErrorRate');
-    const reqsEl = document.getElementById('statTotalRequests');
-    const nodeEl = document.getElementById('metaNodeName');
-    const ipEl = document.getElementById('metaPodIp');
-    const resetTimeEl = document.getElementById('metaResetDuration');
-    const clusterEl = document.getElementById('metaClusterContext');
-
-    // Values measured from the real-milp-pilot-v2 run on AKS
-    if (p95El) p95El.textContent = '0.33 ms';
-    if (rpsEl) rpsEl.textContent = '10.85 RPS';
-    if (errEl) errEl.textContent = '5.37%';
-    if (reqsEl) reqsEl.textContent = '651 reqs';
-    if (nodeEl) nodeEl.textContent = 'aks-system-35513594-vmss000000';
-    if (ipEl) ipEl.textContent = '10.224.0.15';
-    if (resetTimeEl) resetTimeEl.textContent = '2m 42s (Seed Reed98 limit=50)';
-    // Will be overwritten by loadLiveClusterStatus() if API succeeds
-    if (clusterEl) clusterEl.textContent = 'aks-primary-eastus2 (Group_1_East) — checking…';
+    const hybrid = s.policies.find(p => p.rounds === 'clean' && p.policy === 'hybrid-v21');
+    const rows = [
+      ['Date and time (UTC)', `${s.date}, ${s.first_run_utc.substring(11, 16)}–${s.last_run_utc.substring(11, 16)}`],
+      ['Workload', s.workload],
+      ['Carbon input', s.carbon_source],
+      ['LLM proposals admitted (clean rounds)', hybrid ? `${hybrid.admitted_llm} of ${hybrid.n}; the other ${hybrid.n - hybrid.admitted_llm} proposed eastus2 and failed the regret check` : '—'],
+      ['Dispatched inside the decision window', `${s.dispatched_in_window} of ${s.executed_sessions}`],
+    ];
+    document.getElementById('evSessionMeta').innerHTML = rows.map(([k, v]) =>
+      `<div class="metadata-row"><span class="meta-key">${k}</span><span class="meta-val">${escapeHtml(v)}</span></div>`).join('');
   }
 
   renderPolicyTable() {
+    const s = this.evidence.live_session;
     const tbody = document.getElementById('policyTableBody');
-    if (!tbody) return;
-
-    const policies = [
-      {
-        mode: 'Static Reference',
-        tag: 'static',
-        targetRegion: 'eastus',
-        carbonIntensity: '407 gCO₂/kWh',
-        carbonReduction: '0.0% (Baseline)',
-        p95Latency: '0.33 ms',
-        fallbackRate: '0.0%',
-        sloStatus: 'PASSED (<500ms)',
-      },
-      {
-        mode: 'Pure MILP',
-        tag: 'milp',
-        targetRegion: 'westus2 / eastus',
-        carbonIntensity: '144 gCO₂/kWh',
-        carbonReduction: '-64.6%',
-        p95Latency: '0.33 ms',
-        fallbackRate: '0.0%',
-        sloStatus: 'PASSED',
-      },
-      {
-        mode: 'Pure LLM (Llama-3)',
-        tag: 'llm',
-        targetRegion: 'westus2',
-        carbonIntensity: '144 gCO₂/kWh',
-        carbonReduction: '-64.6%',
-        p95Latency: '1.20 ms',
-        fallbackRate: 'N/A (Unguarded)',
-        sloStatus: 'FAIL-PRONE',
-      },
-      {
-        mode: 'Trust-Gated Hybrid',
-        tag: 'hybrid',
-        targetRegion: 'westus2 (Verified)',
-        carbonIntensity: '144 gCO₂/kWh',
-        carbonReduction: '-64.6%',
-        p95Latency: '0.33 ms',
-        fallbackRate: '0.0% (100% on attack)',
-        sloStatus: 'GUARANTEED',
-      },
-    ];
-
-    tbody.innerHTML = policies.map((p) => `
-      <tr class="${p.tag === 'hybrid' ? 'highlighted-row' : ''}">
-        <td><span class="policy-tag ${p.tag}">${p.mode}</span></td>
-        <td><code>${p.targetRegion}</code></td>
-        <td><strong>${p.carbonIntensity}</strong></td>
-        <td><span style="color: ${p.carbonReduction.startsWith('-') ? '#a8c0dd' : 'var(--c-text-muted)'}">
-          ${p.carbonReduction}
-        </span></td>
-        <td><code>${p.p95Latency}</code></td>
-        <td>${p.fallbackRate}</td>
-        <td><span class="card-badge" style="${p.sloStatus === 'GUARANTEED' ? 'background: rgba(119,141,169,0.3); border-color: var(--c-steel-accent); color: var(--c-crisp-text);' : ''}">
-          ${p.sloStatus}
-        </span></td>
-      </tr>
-    `).join('');
-
-    // Add a live data footnote if the table has a tfoot
-    const tfoot = tbody.closest('table')?.querySelector('tfoot');
-    if (tfoot) {
-      tfoot.innerHTML = `<tr><td colspan="7" style="font-size:10px;color:var(--c-text-muted);padding-top:6px;">
-        * Carbon intensity values from Electricity Maps live feed (US-MIDA-PJM → eastus2, US-NW-BPAT → westus2).
-        Table shows current live readings; experiment was run with PJM=563, BPA=168 historical values on 2026-09-07.
-      </td></tr>`;
-    }
+    const dash = '—';
+    tbody.innerHTML = s.policies.map(p => `
+      <tr class="${p.policy === 'hybrid-v21' ? 'highlighted-row' : ''}">
+        <td>${p.rounds === 'clean' ? 'Clean (8)' : 'Fault (4)'}</td>
+        <td><span class="policy-tag ${p.policy.startsWith('hybrid') ? 'hybrid' : p.policy}">${escapeHtml(p.label)}</span></td>
+        <td>${p.n}</td>
+        <td><code>${p.ran_eastus2} / ${p.ran_westus2} / ${p.held}</code></td>
+        <td>${p.llm_proposed_eastus2 == null ? dash
+          : (p.held === p.n && p.policy.startsWith('hybrid')) ? 'not asked: held before proposing'
+          : `${p.llm_proposed_eastus2} / ${p.llm_proposed_westus2}${p.policy === 'hybrid-v21' && p.rounds === 'clean' ? ` (admitted ${p.admitted_llm})` : ''}`}</td>
+        <td><strong>${p.mean_true_ci == null ? 'held, no session' : `${p.mean_true_ci} gCO₂/kWh`}</strong></td>
+        <td>${p.mean_optimum_ci == null ? dash : `${p.mean_optimum_ci} gCO₂/kWh`}</td>
+        <td><code>${p.median_p95_ms == null ? dash : `${p.median_p95_ms} ms`}</code></td>
+        <td>${p.sessions ? `${p.slo_passed}/${p.sessions}` : 'no session'}</td>
+      </tr>`).join('');
   }
 
-  initTrustGateSliders() {
-    const sliders = [
-      { id: 'sliderFaithfulness', key: 'faithfulness', valEl: 'valFaithfulness', barEl: 'barFaithfulness' },
-      { id: 'sliderPrecision', key: 'precision', valEl: 'valPrecision', barEl: 'barPrecision' },
-      { id: 'sliderGuardrails', key: 'guardrails', valEl: 'valGuardrails', barEl: 'barGuardrails' },
-      { id: 'sliderFreshness', key: 'freshness', valEl: 'valFreshness', barEl: 'barFreshness' },
-      { id: 'sliderFeasibility', key: 'feasibility', valEl: 'valFeasibility', barEl: 'barFeasibility' },
-    ];
-
-    sliders.forEach(s => {
-      const input = document.getElementById(s.id);
-      if (input) {
-        input.addEventListener('input', (e) => {
-          const val = parseFloat(e.target.value);
-          this.trustScores[s.key] = val;
-          const displayEl = document.getElementById(s.valEl);
-          if (displayEl) displayEl.textContent = val.toFixed(2);
-          const barEl = document.getElementById(s.barEl);
-          if (barEl) barEl.style.width = `${val * 100}%`;
-          this.updateTrustGateDisplay();
-        });
-      }
-    });
-
-    const btnSimulateAttack = document.getElementById('btnSimulateHallucination');
-    if (btnSimulateAttack) {
-      btnSimulateAttack.addEventListener('click', () => this.simulateAdversarialHallucination());
-    }
-
-    const btnResetTrust = document.getElementById('btnResetTrustScores');
-    if (btnResetTrust) {
-      btnResetTrust.addEventListener('click', () => this.resetTrustScores());
-    }
+  renderOffline() {
+    const grid = document.getElementById('offlineGrid');
+    grid.innerHTML = this.evidence.offline.map(o => `
+      <div class="offline-item">
+        <div class="offline-value">${escapeHtml(o.value)}</div>
+        <div class="offline-claim">${escapeHtml(o.claim)}</div>
+        <div class="offline-detail">${escapeHtml(o.detail)} <span class="offline-source">[${escapeHtml(o.source)}]</span></div>
+      </div>`).join('');
   }
 
-  updateTrustGateDisplay() {
-    let composite = 0;
-    for (const [key, weight] of Object.entries(this.trustWeights)) {
-      composite += (this.trustScores[key] || 0) * weight;
-    }
-
-    const scoreEl = document.getElementById('trustCompositeScore');
-    const decisionEl = document.getElementById('trustGateDecision');
-    const bannerEl = document.getElementById('trustGateAlertBanner');
-
-    if (scoreEl) {
-      scoreEl.textContent = composite.toFixed(3);
-      if (composite < this.threshold) {
-        scoreEl.classList.add('fail');
-      } else {
-        scoreEl.classList.remove('fail');
-      }
-    }
-
-    if (decisionEl) {
-      if (composite >= this.threshold) {
-        decisionEl.innerHTML = `<span style="color: #a8c0dd;">● PROPOSAL ACCEPTED</span> (Score &ge; ${this.threshold})`;
-        if (bannerEl) bannerEl.style.display = 'none';
-      } else {
-        decisionEl.innerHTML = `<span style="color: #ff6b6b;">● FAIL-CLOSED (MILP Fallback Triggered)</span> (Score &lt; ${this.threshold})`;
-        if (bannerEl) {
-          bannerEl.style.display = 'block';
-          bannerEl.textContent = '⚠️ Trust Gate check failed. Hybrid policy automatically fallback-scheduled workload using deterministic PuLP MILP solver.';
-        }
-      }
-    }
-  }
-
-  simulateAdversarialHallucination() {
-    this.trustScores.faithfulness = 0.20;
-    this.trustScores.guardrails = 0.30;
-
-    const sf = document.getElementById('sliderFaithfulness');
-    if (sf) { sf.value = 0.20; sf.dispatchEvent(new Event('input')); }
-    const sg = document.getElementById('sliderGuardrails');
-    if (sg) { sg.value = 0.30; sg.dispatchEvent(new Event('input')); }
-  }
-
-  resetTrustScores() {
-    this.trustScores = {
-      faithfulness: 0.95,
-      precision: 0.92,
-      guardrails: 1.0,
-      freshness: 1.0,
-      feasibility: 1.0,
-    };
-
-    ['Faithfulness', 'Precision', 'Guardrails', 'Freshness', 'Feasibility'].forEach(name => {
-      const lower = name.toLowerCase();
-      const slider = document.getElementById(`slider${name}`);
-      if (slider) {
-        slider.value = this.trustScores[lower];
-        slider.dispatchEvent(new Event('input'));
-      }
-    });
-  }
-
-  renderTerminalLog() {
-    const terminalEl = document.getElementById('terminalOutput');
-    if (!terminalEl) return;
-
-    // Build syntax-highlighted HTML for the wrk2 output
+  renderRecordedLog() {
+    const r = this.evidence.example_receipt;
+    document.getElementById('terminalTitle').textContent = `Recorded wrk2 output · ${r.run_id}`;
     const lines = [
-      { type: 'muted',   text: '# aks-primary-eastus · benchmark namespace · Run: real-milp-pilot-v2' },
-      { type: 'prompt',  text: '$ wrk2 -t2 -c10 -d60s -R10 --latency \\' },
-      { type: 'prompt',  text: '    http://nginx-thrift.benchmark.svc.cluster.local:8080' },
-      { type: 'default', text: '' },
-      { type: 'label',   text: 'Running 1m test @ http://nginx-thrift.benchmark.svc.cluster.local:8080' },
-      { type: 'muted',   text: '  2 threads and 10 connections' },
-      { type: 'muted',   text: '  Thread calibration: mean lat.: 0.221ms, rate sampling interval: 10ms' },
-      { type: 'default', text: '----------------------------------------------------------------------' },
-      { type: 'label',   text: 'Test Results @ http://nginx-thrift.benchmark.svc.cluster.local:8080' },
-      { type: 'muted',   text: '  Thread Stats   Avg      Stdev     99%   +/- Stdev' },
-      { type: 'val',     text: '    Latency     222.99us   85.59us  388.00us   70.02%' },
-      { type: 'val',     text: '    Req/Sec       5.58     23.87   111.00     94.71%' },
-      { type: 'default', text: '' },
-      { type: 'label',   text: '  Latency Distribution (HdrHistogram)' },
-      { type: 'val',     text: '   50.000%   233.00us' },
-      { type: 'val',     text: '   75.000%   289.00us' },
-      { type: 'val',     text: '   90.000%   312.00us' },
-      { type: 'yellow',  text: '   99.000%   388.00us' },
-      { type: 'yellow',  text: '   99.900%   481.00us' },
-      { type: 'red',     text: '  100.000%     1.03ms  (max)' },
-      { type: 'default', text: '----------------------------------------------------------------------' },
-      { type: 'val',     text: '  651 requests in 1.00m, 1.92MB read' },
-      { type: 'yellow',  text: '  Socket errors: connect 0, read 0, write 0, timeout 35' },
-      { type: 'label',   text: 'Requests/sec:     10.85' },
-      { type: 'label',   text: 'Transfer/sec:     32.71KB' },
-      { type: 'default', text: '' },
-      { type: 'green',   text: '  scheduler outcome=executed  fallback=False' },
-      { type: 'green',   text: '  carbon_region=westus2  zone=US-NW-BPAT  intensity=152 gCO₂/kWh' },
-      { type: 'green',   text: '  carbon_reduction=63.4%  vs baseline (PJM=415 gCO₂/kWh)' },
-      { type: 'muted',   text: '' },
-      { type: 'muted',   text: '# Completed in 64s · Trust Gate score=0.97 · SLO: PASSED' },
+      ['muted', `# RECORDED ${r.dispatched_at.substring(0, 16).replace('T', ' ')} UTC · ${r.cluster} · gate ${r.gate_profile}`],
+      ['muted', `# decision: ${r.decision_source === 'llm' ? 'LLM proposal admitted' : r.decision_source} (${r.region}); regret ${r.carbon_regret}; F ${r.ragas_faithfulness}, CP ${r.ragas_context_precision}`],
+      ['muted', '# benchmark log excerpt (per-percentile table omitted):'],
+      ...r.log_excerpt.map(l => [/requests in|Requests\/sec/.test(l) ? 'val' : (/^\s*\d+\.\d+%/.test(l) ? 'val' : 'default'), l]),
+      ['muted', `# receipt: P95 ${r.p95_ms} ms · error rate ${r.error_rate} · slo_passed=${r.slo_passed}`],
     ];
+    const color = { default: '#b9d0de', muted: '#6b8a9b', val: '#a8c0dd' };
+    document.getElementById('terminalOutput').innerHTML = lines.map(([t, text]) =>
+      `<span style="color:${color[t]};display:block;">${escapeHtml(text) || '&nbsp;'}</span>`).join('');
 
-    const colorMap = {
-      default: '#b9d0de',
-      muted:   '#4a6a7c',
-      label:   '#778DA9',
-      val:     '#a8c0dd',
-      green:   '#4caf82',
-      yellow:  '#febc2e',
-      red:     '#ff6b6b',
-      prompt:  '#627C85',
-    };
-
-    terminalEl.innerHTML = lines.map(l => {
-      const color = colorMap[l.type] || colorMap.default;
-      const escaped = l.text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      return `<span style="color:${color};display:block;">${escaped || '&nbsp;'}</span>`;
-    }).join('');
   }
 
+  // ── Gate v2.1 sandbox ──────────────────────────────────────────────────────
+
+  initSandbox() {
+    this.el = {
+      region: document.getElementById('sbRegion'), age: document.getElementById('sbAge'),
+      zone: document.getElementById('sbZone'), catalog: document.getElementById('sbCatalog'),
+      f: document.getElementById('sbF'), cp: document.getElementById('sbCP'), rule: document.getElementById('sbRule'),
+    };
+    Object.values(this.el).forEach(input => input.addEventListener('input', () => this.evaluateSandbox()));
+    document.querySelectorAll('[data-preset]').forEach(btn =>
+      btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset)));
+    this.applyPreset('agree');
+  }
+
+  applyPreset(name) {
+    const p = PRESETS[name];
+    const c = this.dashboard.carbonInputs().values;
+    const best = c.westus2 < c.eastus2 ? 'westus2' : 'eastus2';
+    const worst = best === 'westus2' ? 'eastus2' : 'westus2';
+    this.el.region.value = p.region === 'best' ? best : p.region === 'worst' ? worst : p.region;
+    this.el.age.value = p.age; this.el.zone.value = p.zone; this.el.catalog.value = p.catalog;
+    this.el.f.value = p.f; this.el.cp.value = p.cp; this.el.rule.value = p.rule;
+    document.querySelectorAll('[data-preset]').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+    this.evaluateSandbox();
+  }
+
+  evaluateSandbox() {
+    if (!this.el) return;
+    const c = this.dashboard.carbonInputs();
+    const values = { ...c.values };
+    let returned = { eastus2: 'US-MIDA-PJM', westus2: 'US-NW-BPAT' };
+    if (this.el.zone.value === 'inwe') {
+      // What the Azure-region lookup really returned: one Indian zone, one value, for both regions.
+      returned = { eastus2: 'IN-WE', westus2: 'IN-WE' };
+      values.eastus2 = values.westus2 = 472;
+    }
+    const f = parseFloat(this.el.f.value), cp = parseFloat(this.el.cp.value);
+    document.getElementById('sbFVal').textContent = f.toFixed(2);
+    document.getElementById('sbCPVal').textContent = cp.toFixed(2);
+    const result = evaluateGateV21({
+      carbon: values,
+      dataAgeHours: this.el.age.value === 'stale' ? 48 : 0.2,
+      returnedZones: returned,
+      catalogP95: { eastus2: 120, westus2: parseInt(this.el.catalog.value, 10) },
+      available: { eastus2: true, westus2: true },
+      proposal: { region: this.el.region.value, declaredP95: 500, inWindow: true, service: true, evidenceOk: true },
+      faithfulness: f, contextPrecision: cp, rule: this.el.rule.value,
+    });
+
+    const label = { admit: 'ADMITTED', fallback: 'REJECTED → EXACT PROGRAM DECIDES', hold: 'HOLD · NO NEW PLACEMENT', none: 'NO FEASIBLE REGION' }[result.outcome];
+    const cls = { admit: 'ok', fallback: 'warn', hold: 'down', none: 'down' }[result.outcome];
+    const placed = result.outcome === 'admit' ? this.el.region.value : result.outcome === 'fallback' ? result.milpRegion : null;
+    document.getElementById('sbResult').innerHTML = `
+      <div class="sb-outcome state-${cls}">${label}${c.source.startsWith('live') ? '' : ' <span class="tag tag-sim">SAMPLE VALUES</span>'}</div>
+      <div class="sb-summary">${escapeHtml(result.summary)}${placed ? ` Placement: <strong>${placed}</strong>.` : ''}</div>`;
+    document.getElementById('sbChecks').innerHTML = result.checks.map(ch =>
+      `<li class="${ch.passed ? 'pass' : 'fail'}"><span>${ch.passed ? '✓' : '✗'}</span> <strong>${escapeHtml(ch.name)}</strong> <em>${escapeHtml(ch.group)}</em> — ${escapeHtml(ch.detail)}</li>`).join('');
+  }
 }
 
 window.MetricsViewController = MetricsViewController;

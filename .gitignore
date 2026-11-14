@@ -90,3 +90,7 @@ benchmark-logs/
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Local runtime state and unrelated generated documents
+/logs/
+/outputs/
