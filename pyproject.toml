@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-kubernetes = ["kubernetes>=29,<35"]
+kubernetes = ["kubernetes>=29,<38"]
 storage = [
   "neo4j>=5,<7",
   "qdrant-client>=1.9,<2",
@@ -36,7 +36,7 @@ observability = [
   "opentelemetry-exporter-otlp-proto-grpc>=1.25,<2",
 ]
 analysis = ["matplotlib>=3.8,<4"]
-dev = ["pytest>=8,<9"]
+dev = ["pytest>=9.0.3,<10"]
 
 [project.scripts]
 carbon-scheduler = "carbon_scheduler.workflow:main"

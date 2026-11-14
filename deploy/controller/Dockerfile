@@ -20,7 +20,7 @@ COPY scripts ./scripts
 # paths without requiring a writable host checkout inside the controller Pod.
 COPY deploy/deathstarbench ./deploy/deathstarbench
 
-RUN pip install --no-cache-dir uv \
+RUN pip install --no-cache-dir uv==0.13.7 \
     && uv sync --frozen --no-dev \
         --extra kubernetes \
         --extra storage \
