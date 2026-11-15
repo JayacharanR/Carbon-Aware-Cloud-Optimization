@@ -256,9 +256,15 @@ kubectl get nodes --context aks-secondary-westus2
 
 ### 5. Launch Operator Dashboard
 ```bash
-python3 web/server.py --port 8080
+uv run python web/server.py --port 8080
 ```
 Open `http://localhost:8080` in your web browser.
+
+The page has no login and its **Run live cycle** button starts real Jobs on AKS, so the server is restrictive by default:
+
+- It listens on `127.0.0.1` and answers only requests addressed to `localhost`, `127.0.0.1` or `[::1]`. To open the page under another name, add `--host <address> --allowed-host <name>`.
+- Run, stop and reset are accepted only from the page itself (same origin) and only from the machine running the server. `--allow-remote-control` lifts the second restriction; use it only on a network you trust.
+- Only the page's own assets are served. Python sources and directory listings are not.
 
 ### 6. Execute Scheduling Cycles
 
@@ -281,6 +287,7 @@ uv run carbon-scheduler --config config/experiment.yaml --mode milp_only --targe
 ```bash
 uv run pytest tests/
 ```
+The suite needs no cloud access: the Kubernetes executor is exercised against a stub API server and the dashboard server against fakes. The audit of 15 November 2026, with its findings, measurements and open items, is in [docs/AUDIT-2026-11-15.md](docs/AUDIT-2026-11-15.md).
 
 ---
 
