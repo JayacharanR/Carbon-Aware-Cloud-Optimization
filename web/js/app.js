@@ -278,7 +278,7 @@ class DashboardController {
         ? '<span class="live-indicator amber">● LIVE (previous observation)</span>'
         : '<span class="live-indicator">● LIVE</span>';
       const pct = this.live.reduction_pct;
-      banner.innerHTML = `${lead} Electricity Maps: PJM (eastus2) <strong>${Math.round(p.intensity)}</strong> vs BPAT (westus2) <strong>${Math.round(s.intensity)}</strong> gCO₂eq/kWh. Lower-carbon region now: <strong>${this.live.recommended_region}</strong>${pct > 0 ? ` (${pct}% lower intensity)` : ''}.${status === 'degraded' ? ` ${escapeHtml(this.live.hold_reason || '')}.` : ''}`;
+      banner.innerHTML = `${lead} Electricity Maps: PJM (eastus2) <strong>${Math.round(p.intensity)}</strong> vs BPAT (westus2) <strong>${Math.round(s.intensity)}</strong> gCO₂eq/kWh. Lower-carbon region now: <strong>${esc(this.live.recommended_region)}</strong>${pct > 0 ? ` (${esc(pct)}% lower intensity)` : ''}.${status === 'degraded' ? ` ${escapeHtml(this.live.hold_reason || '')}.` : ''}`;
     }
 
     // Placement banner and animation: where the workload really is
@@ -287,25 +287,25 @@ class DashboardController {
     const note = document.getElementById('canvasNote');
     const cur = this.currentCycle();
     const sc = cur && this.cycleActive() ? cur.scenario : null;
-    const scText = sc ? ` <span class="tag tag-sim">SCENARIO</span> ${sc.region} spiked ${sc.live_value} → ${sc.scenario_value} gCO₂/kWh in the scheduler's input.` : '';
+    const scText = sc ? ` <span class="tag tag-sim">SCENARIO</span> ${esc(sc.region)} spiked ${esc(sc.live_value)} → ${esc(sc.scenario_value)} gCO₂/kWh in the scheduler's input.` : '';
     if (pl.kind === 'simulation') {
       pb.innerHTML = `<span class="tag tag-sim">SIMULATION</span> ${escapeHtml(sim.events[sim.events.length - 1] || 'Reading carbon meters')}`;
-      note.innerHTML = `<span class="tag tag-sim">SIMULATION</span> Placement: ${pl.region} · no AKS execution`;
+      note.innerHTML = `<span class="tag tag-sim">SIMULATION</span> Placement: ${esc(pl.region)} · no AKS execution`;
     } else if (pl.kind === 'running') {
       const what = pl.text.startsWith('wrk2')
         ? 'wrk2 is sending compose-post requests (10 req/s) to this cluster now'
         : 'the fixture reset is running on this cluster; the benchmark starts next';
-      const switched = pl.from ? `<strong class="state-warn">Switched</strong> from ${pl.from} to <strong>${pl.cluster}</strong>. ` : `Placed on <strong>${pl.cluster}</strong> (${pl.region}). `;
+      const switched = pl.from ? `<strong class="state-warn">Switched</strong> from ${esc(pl.from)} to <strong>${esc(pl.cluster)}</strong>. ` : `Placed on <strong>${esc(pl.cluster)}</strong> (${esc(pl.region)}). `;
       pb.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${switched}${what}.${scText}`;
-      note.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.from ? `switched ${pl.from} → ` : ''}${pl.cluster} · ${pl.text}`;
+      note.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.from ? `switched ${esc(pl.from)} → ` : ''}${esc(pl.cluster)} · ${pl.text}`;
     } else if (pl.kind === 'deciding') {
       pb.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.text}; no Job has been created yet.${scText}`;
       note.innerHTML = `<span class="tag tag-live">LIVE RUN</span> ${pl.text}…`;
     } else if (pl.kind === 'last') {
       const r = pl.receipt;
-      const spikeNote = r.scenario ? ` <span class="tag tag-sim">SCENARIO</span> decided with ${r.scenario.region} spiked to ${r.scenario.scenario_value} gCO₂/kWh.` : '';
-      pb.innerHTML = `<span class="tag tag-live">LAST REAL PLACEMENT</span> <strong>${r.cluster}</strong> at ${fmtTime(r.dispatched_at)} (run <code>${r.run_id}</code>, ${r.decision_source === 'llm' ? 'LLM proposal admitted' : 'exact program decided'}): P95 ${r.p95_ms} ms, SLO ${r.slo_passed ? 'passed' : 'failed'}.${spikeNote}`;
-      note.innerHTML = `Flow to the last real placement · ${r.cluster}`;
+      const spikeNote = r.scenario ? ` <span class="tag tag-sim">SCENARIO</span> decided with ${esc(r.scenario.region)} spiked to ${esc(r.scenario.scenario_value)} gCO₂/kWh.` : '';
+      pb.innerHTML = `<span class="tag tag-live">LAST REAL PLACEMENT</span> <strong>${esc(r.cluster)}</strong> at ${fmtTime(r.dispatched_at)} (run <code>${esc(r.run_id)}</code>, ${r.decision_source === 'llm' ? 'LLM proposal admitted' : 'exact program decided'}): P95 ${esc(r.p95_ms)} ms, SLO ${r.slo_passed ? 'passed' : 'failed'}.${spikeNote}`;
+      note.innerHTML = `Flow to the last real placement · ${esc(r.cluster)}`;
     } else {
       pb.textContent = 'Ready for a new presentation run. Run a live cycle or use the adjustable carbon simulation.';
       note.textContent = 'Waiting for a run';
@@ -379,7 +379,7 @@ class DashboardController {
       const last = cur.events && cur.events.length ? cur.events[cur.events.length - 1].text : 'starting';
       statusEl.innerHTML = `<span class="live-dot"></span> <strong>${escapeHtml(cur.run_id)}</strong> · ${escapeHtml(last)}`;
     } else if (phase === 'failed' || phase === 'cancel_failed' || phase === 'cancelled') {
-      statusEl.innerHTML = `<span class="txt-hold">Cycle ${escapeHtml(cur.run_id)} ${phase.replace('_', ' ')}:</span> ${escapeHtml(cur.events[cur.events.length - 1].text)}`;
+      statusEl.innerHTML = `<span class="txt-hold">Cycle ${escapeHtml(cur.run_id)} ${esc(phase.replace('_', ' '))}:</span> ${escapeHtml(cur.events[cur.events.length - 1].text)}`;
     } else {
       statusEl.innerHTML = `Cycle <strong>${escapeHtml(cur.run_id)}</strong> finished at ${fmtTime(cur.finished_at)}.`;
     }
@@ -402,13 +402,13 @@ class DashboardController {
       <div class="policy-table-wrapper"><table class="policy-table compact">
         <thead><tr><th>Dispatched (UTC)</th><th>Run</th><th>Carbon input</th><th>LLM proposed</th><th>Gate v2.1</th><th>Placed on</th><th>P95</th><th>Errors</th><th>SLO</th></tr></thead>
         <tbody>${hist.map(r => `<tr>
-          <td>${r.dispatched_at ? r.dispatched_at.substring(0, 16).replace('T', ' ') : '—'}</td>
+          <td>${r.dispatched_at ? esc(r.dispatched_at.substring(0, 16).replace('T', ' ')) : '—'}</td>
           <td><code>${escapeHtml(r.run_id)}</code></td>
-          <td>${r.scenario ? `<span class="tag tag-sim">SPIKE</span> ${r.scenario.region} ×${r.scenario.factor}` : 'live'}</td>
-          <td>${r.llm_proposed_region || '—'}</td>
-          <td>${r.gate_passed ? 'admitted' : `rejected (${r.gate_failed_checks.length ? r.gate_failed_checks.join(', ') : 'evidence score'})`}</td>
-          <td>${r.cluster || r.outcome}</td>
-          <td>${r.p95_ms == null ? '—' : `${r.p95_ms} ms`}</td>
+          <td>${r.scenario ? `<span class="tag tag-sim">SPIKE</span> ${esc(r.scenario.region)} ×${esc(r.scenario.factor)}` : 'live'}</td>
+          <td>${esc(r.llm_proposed_region || '—')}</td>
+          <td>${r.gate_passed ? 'admitted' : `rejected (${r.gate_failed_checks.length ? esc(r.gate_failed_checks.join(', ')) : 'evidence score'})`}</td>
+          <td>${esc(r.cluster || r.outcome)}</td>
+          <td>${r.p95_ms == null ? '—' : `${esc(r.p95_ms)} ms`}</td>
           <td>${r.error_rate == null ? '—' : `${(r.error_rate * 100).toFixed(2)}%`}</td>
           <td>${r.slo_passed == null ? '—' : r.slo_passed ? 'passed' : 'failed'}</td></tr>`).join('')}</tbody>
       </table></div>` : '';
@@ -426,15 +426,15 @@ class DashboardController {
     else if (r.llm_proposed_region) gate = `<span class="state-warn">rejected</span> by the ${scoreText} &lt; 0.6; all ${r.gate_checks_total} hard checks passed`;
     else gate = `<span class="state-warn">no admissible proposal</span>${r.gate_failure_reason ? ` (${escapeHtml(r.gate_failure_reason)})` : ''}`;
     const rows = [
-      ...(r.scenario ? [['Scenario', `<span class="tag tag-sim">SPIKE</span> ${r.scenario.region} ${r.scenario.live_value} → ${r.scenario.scenario_value} gCO₂/kWh (×${r.scenario.factor}, input only)`]] : []),
+      ...(r.scenario ? [['Scenario', `<span class="tag tag-sim">SPIKE</span> ${esc(r.scenario.region)} ${esc(r.scenario.live_value)} → ${esc(r.scenario.scenario_value)} gCO₂/kWh (×${esc(r.scenario.factor)}, input only)`]] : []),
       [r.scenario ? 'Carbon seen by the scheduler' : 'Carbon captured', `eastus2 ${ci('eastus2')} · westus2 ${ci('westus2')}`],
-      ['Llama-3 8B proposed', r.llm_proposed_region || 'no valid proposal'],
+      ['Llama-3 8B proposed', esc(r.llm_proposed_region || 'no valid proposal')],
       ['Gate v2.1', gate],
       ['Decision', r.decision_source === 'llm' ? 'LLM proposal' : r.decision_source === 'milp' ? 'exact program (fallback)' : escapeHtml(r.decision_source || '—')],
-      ['Placed on', r.cluster ? `<strong>${r.cluster}</strong>` : escapeHtml(r.outcome)],
+      ['Placed on', r.cluster ? `<strong>${esc(r.cluster)}</strong>` : escapeHtml(r.outcome)],
       ['Benchmark Job', r.job_name ? `<code>${escapeHtml(r.job_name)}</code>` : '—'],
       ['Dispatched → completed', `${fmtTimeSec(r.dispatched_at)} → ${fmtTimeSec(r.completed_at)} UTC`],
-      ['Measured P95 · errors', r.p95_ms == null ? '—' : `${r.p95_ms} ms · ${(r.error_rate * 100).toFixed(2)}% (SLO 500 ms, 5%)`],
+      ['Measured P95 · errors', r.p95_ms == null ? '—' : `${esc(r.p95_ms)} ms · ${(r.error_rate * 100).toFixed(2)}% (SLO 500 ms, 5%)`],
       ['SLO', r.slo_passed == null ? '—' : r.slo_passed ? '<span class="state-ok">passed</span>' : '<span class="txt-hold">failed</span>'],
     ];
     if (r.execution_failure_reason) rows.push(['Execution', `<span class="txt-hold">${escapeHtml(r.execution_failure_reason)}</span>`]);
@@ -462,7 +462,7 @@ class DashboardController {
     ]) {
       const d = failed ? { text: 'status check failed', cls: 'unknown', title: st.error } : describe(st[key]);
       const header = document.getElementById(headerId);
-      header.innerHTML = `<span class="pulse-dot ${d.cls}"></span><span class="badge-region">${REGION_OF_CLUSTER[ctx]}</span><span class="badge-state"> · ${d.text}</span>`;
+      header.innerHTML = `<span class="pulse-dot ${d.cls}"></span><span class="badge-region">${REGION_OF_CLUSTER[ctx]}</span><span class="badge-state"> · ${esc(d.text)}</span>`;
       header.title = `${ctx}: ${d.title || 'live kubectl check from the web host'}`;
       for (const id of [hudId, cardId]) {
         const el = document.getElementById(id);
@@ -489,9 +489,12 @@ class DashboardController {
   }
 }
 
+// Everything the server reports (receipts, kubectl messages, the LLM's own
+// proposal) is text, never markup.
 function escapeHtml(text) {
-  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
+const esc = escapeHtml;
 
 document.addEventListener('DOMContentLoaded', () => {
   const anim = new TrafficDirectorAnimation('trafficCanvas');

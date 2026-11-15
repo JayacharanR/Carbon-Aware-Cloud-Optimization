@@ -69,7 +69,7 @@ class SnapshotMode(str, Enum):
 
 class CarbonPoint(ContractModel):
     timestamp: datetime
-    carbon_intensity_gco2eq_per_kwh: float = Field(ge=0)
+    carbon_intensity_gco2eq_per_kwh: float = Field(ge=0, allow_inf_nan=False)
 
     _timestamp_is_timezone_aware = field_validator("timestamp")(_require_timezone)
 
@@ -155,7 +155,7 @@ class ActionProposal(ContractModel):
     target_service: str = Field(min_length=1)
     scheduled_time: datetime | None = None
     workload_profile: str = Field(min_length=1)
-    expected_p95_latency_ms: float = Field(gt=0)
+    expected_p95_latency_ms: float = Field(gt=0, allow_inf_nan=False)
     self_reported_confidence: float = Field(ge=0, le=1)
     evidence_ids: list[str] = Field(default_factory=list)
     rationale: str = Field(min_length=1)

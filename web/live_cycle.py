@@ -73,10 +73,17 @@ def _floor_to_slot(moment: datetime) -> datetime:
 def summarize_run(run_dir: Path) -> dict[str, Any] | None:
     """Receipt fields the page shows, read from a finished run's cycles.jsonl."""
 
-    cycles = run_dir / "cycles.jsonl"
-    if not cycles.exists() or not cycles.read_text(encoding="utf-8").strip():
+    # A run that is still being written, or was interrupted mid-write, has no
+    # usable receipt yet; that must not break the status endpoint.
+    try:
+        lines = (run_dir / "cycles.jsonl").read_text(encoding="utf-8").strip().splitlines()
+        record = json.loads(lines[-1]) if lines else None
+        scenario_file = run_dir.parent.parent / "scenario.json"
+        scenario = json.loads(scenario_file.read_text(encoding="utf-8")) if scenario_file.exists() else None
+    except (OSError, ValueError):
         return None
-    record = json.loads(cycles.read_text(encoding="utf-8").strip().splitlines()[-1])
+    if not isinstance(record, dict):
+        return None
     receipt = record.get("execution_receipt") or {}
     trust = record.get("trust_report") or {}
     agent = record.get("agent_proposal") or {}
@@ -91,13 +98,12 @@ def summarize_run(run_dir: Path) -> dict[str, Any] | None:
         for region, info in regions.items()
     }
     failed_checks = [c.get("name") for c in trust.get("rail_checks") or [] if not c.get("passed")]
-    scenario_file = run_dir.parent.parent / "scenario.json"
-    scenario = json.loads(scenario_file.read_text(encoding="utf-8")) if scenario_file.exists() else None
     log_excerpt: list[str] = []
     for path in sorted((run_dir / "benchmark-logs").glob("*-benchmark.log")):
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        keep = [l for l in lines if l.strip() and not l.lstrip().startswith(("0.", "1.")) and "Value   Percentile" not in l]
-        log_excerpt = [l for l in keep if any(k in l for k in (
+        keep = [line for line in lines if line.strip() and not line.lstrip().startswith(("0.", "1."))
+                and "Value   Percentile" not in line]
+        log_excerpt = [line for line in keep if any(k in line for k in (
             "Running", "threads and", "Latency", "Req/Sec", "requests in", "Requests/sec", "Transfer/sec",
             "Socket errors", "Non-2xx", "50.000%", "90.000%", "99.000%", "Thread Stats"))][:16]
     return {
@@ -135,7 +141,11 @@ def summarize_run(run_dir: Path) -> dict[str, Any] | None:
 class LiveCycleRunner:
     """At most one real cycle at a time; state is kept in memory and on disk."""
 
-    def __init__(self) -> None:
+    def __init__(self, clusters: dict[str, str] | None = None, namespace: str = NAMESPACE) -> None:
+        self.clusters = dict(clusters or CLUSTERS)  # region -> kubectl context
+        self.namespace = namespace
+        # Finished receipts never change; keep each summary until its file does.
+        self._summaries: dict[Path, tuple[tuple[int, int], dict[str, Any] | None]] = {}
         self._lock = threading.Lock()
         self._state: dict[str, Any] = {"phase": "idle"}
         self._thread: threading.Thread | None = None
@@ -154,7 +164,15 @@ class LiveCycleRunner:
             return []
         runs = []
         for run_dir in sorted(OUT_ROOT.glob("web-*/runs/*"), reverse=True):
-            summary = summarize_run(run_dir)
+            try:
+                stat = (run_dir / "cycles.jsonl").stat()
+            except OSError:
+                continue
+            version = (stat.st_mtime_ns, stat.st_size)
+            cached = self._summaries.get(run_dir)
+            if cached is None or cached[0] != version:
+                cached = self._summaries[run_dir] = (version, summarize_run(run_dir))
+            summary = cached[1]
             if summary:
                 runs.append(summary)
             if len(runs) >= limit:
@@ -254,10 +272,10 @@ class LiveCycleRunner:
         self._terminate_process()
         errors = []
         selector = f"app.kubernetes.io/managed-by=carbon-scheduler,carbon-scheduler/run-id={run_id}"
-        for context in CLUSTERS.values():
+        for context in self.clusters.values():
             try:
                 proc = subprocess.run(["kubectl", "--context", context, "--request-timeout=10s",
-                    "delete", "jobs", "-n", NAMESPACE, "-l", selector,
+                    "delete", "jobs", "-n", self.namespace, "-l", selector,
                     "--cascade=foreground", "--wait=true", "--timeout=20s", "--ignore-not-found=true"],
                     capture_output=True, text=True, timeout=30)
                 if proc.returncode:
@@ -391,15 +409,18 @@ class LiveCycleRunner:
     def _watch_jobs(self, run_id: str, seen: dict[str, str]) -> None:
         """Report this cycle's Jobs as they appear and progress on either cluster."""
 
-        for region, context in CLUSTERS.items():
+        for region, context in self.clusters.items():
             self._checkpoint()
             try:
+                # Ask only for this run's Jobs (the executor labels them), not
+                # every Job the namespace has accumulated.
                 proc = subprocess.run(
-                    ["kubectl", "--context", context, "--request-timeout=8s", "get", "jobs", "-n", NAMESPACE, "-o", "json"],
+                    ["kubectl", "--context", context, "--request-timeout=8s", "get", "jobs", "-n", self.namespace,
+                     "-l", f"carbon-scheduler/run-id={run_id}", "-o", "json"],
                     capture_output=True, text=True, timeout=12)
                 items = json.loads(proc.stdout).get("items", []) if proc.returncode == 0 else []
-            except (subprocess.TimeoutExpired, json.JSONDecodeError):
-                continue
+            except (OSError, subprocess.TimeoutExpired, ValueError):
+                continue  # progress display only; the scheduler process is unaffected
             for job in sorted(items, key=lambda j: not j["metadata"]["name"].startswith("reset")):
                 name = job["metadata"]["name"]
                 if run_id not in name:
