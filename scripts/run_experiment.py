@@ -15,9 +15,8 @@ import os
 import sys
 import uuid
 from dataclasses import dataclass
-from datetime import timedelta
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 try:  # direct script invocation
     from _common import parse_datetime, resolve_path  # type: ignore
@@ -35,7 +34,6 @@ from carbon_scheduler.executor import (  # noqa: E402
 from carbon_scheduler.graph_ingest import ManifestDependencyGraph  # noqa: E402
 from carbon_scheduler.results import RunArtifactWriter  # noqa: E402
 from carbon_scheduler.schemas import (  # noqa: E402
-    CarbonSnapshot,
     DecisionInput,
     DecisionMode,
     DependencyContext,

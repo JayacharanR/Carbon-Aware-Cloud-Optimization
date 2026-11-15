@@ -233,12 +233,6 @@ def configuration_sha256(path: str | Path) -> str:
     return sha256(content).hexdigest()
 
 
-def config_to_dict(config: ExperimentConfig) -> dict[str, Any]:
-    """Return a JSON-compatible configuration record for logging."""
-
-    return config.model_dump(mode="json")
-
-
 def _placeholder_paths(value: Any, path: str = "") -> list[str]:
     """Find explicit template markers before Pydantic coerces/validates values."""
 

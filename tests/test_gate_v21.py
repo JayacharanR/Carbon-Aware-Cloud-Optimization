@@ -19,7 +19,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from carbon_scheduler.carbon_client import ElectricityMapsClient, load_replay_trace, reported_zone  # noqa: E402
 from carbon_scheduler.executor import DryRunExecutor  # noqa: E402
 from carbon_scheduler.schemas import (  # noqa: E402
-    ActionType,
     CarbonSnapshot,
     DecisionMode,
     ExecutionReceipt,

@@ -11,12 +11,11 @@ import argparse
 import json
 import subprocess
 import sys
-from pathlib import Path
 
 try:
-    from _common import REPO_ROOT, resolve_path  # type: ignore
+    from _common import resolve_path  # type: ignore
 except ImportError:
-    from scripts._common import REPO_ROOT, resolve_path  # type: ignore
+    from scripts._common import resolve_path  # type: ignore
 
 from carbon_scheduler.executor import _render_job  # noqa: E402
 

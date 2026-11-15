@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from urllib3.exceptions import ReadTimeoutError  # noqa: E402
 
-from carbon_scheduler import executor as executor_module  # noqa: E402
 from carbon_scheduler.executor import (  # noqa: E402
     API_TIMEOUT,
     KubernetesBenchmarkExecutor,

@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 try:
-    from _common import REPO_ROOT, resolve_path  # type: ignore
+    from _common import resolve_path  # type: ignore
 except ImportError:
-    from scripts._common import REPO_ROOT, resolve_path  # type: ignore
+    from scripts._common import resolve_path  # type: ignore
 
 from carbon_scheduler.results import ArtifactError, copy_run_artifacts  # noqa: E402
 
