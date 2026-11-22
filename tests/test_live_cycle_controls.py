@@ -15,6 +15,9 @@ from web import live_cycle
 
 @pytest.fixture
 def runner(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        live_cycle, "BASE_CONFIG", live_cycle.REPO / "config" / "experiment.draft.yaml"
+    )
     monkeypatch.setattr(live_cycle, "OUT_ROOT", tmp_path)
     return live_cycle.LiveCycleRunner()
 
